@@ -20,12 +20,13 @@ def sysexit(signum, frame):
     sys.exit(1)
 
 
-def prompt(cleanup_function):
+def prompt(cleanup_function, signalnum=signal.SIGINT):
     """Give the user a decision prompt when ctrl+C is pressed."""
     def cleanup_prompt(signum, frame):
-        # Allow the user to exit immediately by
-        # pressing ctrl+C again while in this block.
-        with handle(signal.SIGINT, sysexit):
+        # This handler is not re-entrant.
+        # Allow the user to exit immediately by sending the same signal
+        # a second time while in this block.
+        with handle(signalnum, sysexit):
             choice = input(dedent("""
                 You pressed ctrl+C. What would you like to do?
                     - to exit immediately, press ctrl+C again
