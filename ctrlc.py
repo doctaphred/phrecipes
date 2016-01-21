@@ -43,6 +43,10 @@ def prompt(cleanup_function):
     return cleanup_prompt
 
 
+def handle_ctrlc(cleanup_function):
+    return handle(signal.SIGINT, prompt(cleanup_function))
+
+
 if __name__ == '__main__':
     import time
 
@@ -54,5 +58,5 @@ if __name__ == '__main__':
     def cleanup():
         print('....................')
 
-    with handle(signal.SIGINT, prompt(cleanup)):
+    with handle_ctrlc(cleanup):
         main()
