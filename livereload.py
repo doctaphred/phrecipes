@@ -41,6 +41,8 @@ def live(name, *args, package=None, **kwargs):
     Args:
         name, package: passed to importlib.import_module.
         *args, **kwargs: passed to ReloadingModule.__init__.
+    Returns:
+        a ReloadingModule which wraps the specified module.
     """
     module = import_module(name, package)
     return ReloadingModule(module, *args, **kwargs)
