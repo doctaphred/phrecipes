@@ -24,6 +24,8 @@ def hashified(struct, use_none=False):
     If use_none is True, returns None instead of raising TypeError for
     unhashable types: this will serve as a bad but sometimes passable
     hash.
+
+    See also functools._make_key, which might be a better choice.
     """
     try:
         hash(struct)
