@@ -1,2 +1,3 @@
 # phredutils
-My personal Python recipes
+
+_"Oh good, he named it after himself..."_
