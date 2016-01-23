@@ -6,12 +6,12 @@ from threading import Thread
 
 def _watch(callback, path, interval):
     path = Path(path)
-    last_modified = path.stat().st_mtime
+    last_modified = path.stat().st_mtime_ns
     while True:
-        modified = path.stat().st_mtime
-        if modified != last_modified:
-            callback(modified)
-            last_modified = modified
+        stat = path.stat()
+        if stat.st_mtime_ns != last_modified:
+            callback(stat)
+            last_modified = stat.st_mtime_ns
         time.sleep(interval)
 
 
@@ -26,8 +26,8 @@ def watch(callback, path, interval=0.5):
     filesystem: on HFS+, it is 1 second. The minimum effective setting
     for interval is therefore resolution / 2, or 0.5 seconds on HFS+.
 
-    The callback is given a single argument: the modification time in
-    seconds.
+    The callback is given a single argument: the stat_result object
+    object returned by Path(path).stat().
 
     This function would preferably be implemented via filesystem event
     notifications, but those are platform-dependent and sound boring to
@@ -59,10 +59,12 @@ if __name__ == '__main__':
     path = sys.argv[1]
 
     def time_delta_printer():
-        last_modified = yield
+        stat = yield
+        last_modified = stat.st_mtime
         print(path, 'first modified at', last_modified)
         while True:
-            modified = yield
+            stat = yield
+            modified = stat.st_mtime
             print(path, 'modified after', modified - last_modified, 's')
             last_modified = modified
 
