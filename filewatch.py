@@ -1,4 +1,5 @@
 import time
+from importlib import reload
 from pathlib import Path
 from threading import Thread
 
@@ -28,6 +29,10 @@ def watch(callback, path, interval=0.5):
     The callback is given a single argument: the modification time in
     seconds.
 
+    This function would preferably be implemented via filesystem event
+    notifications, but those are platform-dependent and sound boring to
+    code. Consider the watchdog library if you need that functionality.
+
     Args:
         callback: called every time the specified file is modified.
         path: a path to a file (string or pathlib.Path).
@@ -37,6 +42,16 @@ def watch(callback, path, interval=0.5):
         Starts a daemon thread which may invoke the given callback.
     """
     Thread(target=_watch, args=(callback, path, interval), daemon=True).start()
+
+
+def autoreload(module, interval=0.5):
+    """Reload module whenever its source file is modified.
+
+    Polls the file every interval seconds in a separate thread.
+
+    See watch.
+    """
+    watch(lambda _: reload(module), module.__file__, interval=interval)
 
 
 if __name__ == '__main__':

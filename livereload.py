@@ -1,3 +1,6 @@
+"""
+See filewatch.py for a better approach using a watcher thread.
+"""
 import time
 from functools import lru_cache, update_wrapper
 from importlib import import_module, reload
