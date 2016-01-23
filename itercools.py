@@ -1,3 +1,7 @@
+"""
+See https://docs.python.org/3/library/itertools.html#itertools-recipes
+for more cool recipes!
+"""
 from collections import defaultdict
 from itertools import tee, filterfalse
 
