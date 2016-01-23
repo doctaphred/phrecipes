@@ -38,16 +38,16 @@ def fmt(s, **kwargs):
     return s.format_map(keys)
 
 
-def pl(*phrases, zero=None, placeholder='#'):
+def pl(singular, plural, zero=None, placeholder='#'):
     """Return a function that returns an appropriate phrase for a given number.
 
     Args:
-        phrases: appropriate phrases for N == 1, 2, etc.
-            If N >= len(phrases), phrases[-1] will be selected.
-        zero: appropriate phrase for N = 0. If zero is None and N == 0,
-            phrases[-1] will be selected.
+        singular: appropriate phrase for N=1.
+        plural: appropriate phrase for N>1.
+        zero: appropriate phrase for N=0. If None, uses plural.
         placeholder: string which will be replaced with the count when
-            the selected phrase is returned.
+            the selected phrase is returned. (Placeholder may simply be
+            omitted from the phrases if not needed.)
     Returns:
         a function which returns the correct phrase for the count it is
         given.
@@ -71,14 +71,14 @@ def pl(*phrases, zero=None, placeholder='#'):
     '5 failures'
     >>> phrase(0)
     'All passed!'
+    >>> n = 10; phrase(n, word=n if n < 5 else 'Too many')
+    'Too many failures'
 
-    >>> phrase = pl('one', 'two', 'several', zero='no')
+    >>> phrase = pl('one', 'more than one', zero='no')
     >>> phrase(1)
     'one'
-    >>> phrase(2)
-    'two'
     >>> phrase(5)
-    'several'
+    'more than one'
     >>> phrase(0)
     'no'
 
@@ -106,46 +106,24 @@ def pl(*phrases, zero=None, placeholder='#'):
     'a single apple was bad'
     >>> n = 0; phrase(n, word=['no', 'a single', 'multiple'][n])
     'no apples were bad'
-
-    >>> phrase = pl(
-    ...     'One is far too few, although with it thou must start.',
-    ...     'Neither count thou two, excepting that thou then proceed to three.',
-    ...     'Thou shalt count to three, no more, no less.',
-    ...     'Four shalt thou not count.',
-    ...     'Five is right out.',
-    ...     'Wast thou even paying attention? If five is right out, what is #?',
-    ...     zero='Ist that even a counting number?')
-    >>> phrase(3)
-    'Thou shalt count to three, no more, no less.'
-    >>> phrase(4)
-    'Four shalt thou not count.'
-    >>> phrase(2)
-    'Neither count thou two, excepting that thou then proceed to three.'
-    >>> phrase(5)
-    'Five is right out.'
-    >>> phrase(100)
-    'Wast thou even paying attention? If five is right out, what is 100?'
-    >>> phrase(0)
-    'Ist that even a counting number?'
     """
-    default = phrases[-1]
     if zero is None:
-        zero = default
-    phrases = (zero,) + phrases
+        zero = plural
 
     def pluralizable(count, *, word=None):
         """Return an appropriate phrase based on the given count.
 
         Substitutes the placeholder with the count, or word if it is
-        given (e.g., "one million").
+        given (e.g., "one million", "too many").
         """
         if word is None:
             word = str(count)
-        try:
-            phrase = phrases[count]
-        except (IndexError, TypeError):
-            # Treat floats, strings, etc. as plural
-            phrase = default
+        if count == 0:
+            phrase = zero
+        elif count == 1:
+            phrase = singular
+        else:
+            phrase = plural
         return phrase.replace(placeholder, word)
 
     return pluralizable
