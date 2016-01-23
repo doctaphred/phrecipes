@@ -36,9 +36,9 @@ def matches(iterable, predicate, value):
     >>> list(matches(range(10), lambda x: x % 3, 2))
     [2, 5, 8]
     """
-    def inner(x):
-        return predicate(x) == value
-    return filter(inner, iterable)
+    for element in iterable:
+        if predicate(element) == value:
+            yield element
 
 
 def lazydivvy(iterable, predicate, values):
