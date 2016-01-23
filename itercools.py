@@ -41,10 +41,12 @@ def matches(iterable, predicate, value):
     return filter(inner, iterable)
 
 
-def partition_dict(iterable, predicate, values=None):
-    """Map the given values to the elements whose predicate gives that value.
+def lazydivvy(iterable, predicate, values):
+    """Map values to iterables of elements whose predicate returns that value.
 
-    >>> remainders = partition_dict(range(10), lambda x: x % 3, range(3))
+    See divvy for an eager version that doesn't require specifying values.
+
+    >>> remainders = lazydivvy(range(10), lambda x: x % 3, range(3))
     >>> for remainder, values in sorted(remainders.items()):
     ...    print(remainder, list(values))
     0 [0, 3, 6, 9]
@@ -52,7 +54,8 @@ def partition_dict(iterable, predicate, values=None):
     2 [2, 5, 8]
     """
     tees = tee(iterable, len(values))
-    return {value: matches(t, predicate, value) for t, value in zip(tees, values)}
+    return {value: matches(t, predicate, value)
+            for t, value in zip(tees, values)}
 
 
 def divvy(iterable, predicate):
