@@ -22,7 +22,12 @@ class KeyReplacer(dict):
 
 
 def fmt(s, **kwargs):
-    """Implement format strings in Python < 3.6
+    """Format the string using local variables.
+
+    Additional variables may be specified via kwargs, which override
+    any local variable names.
+
+    Missing names do not raise exceptions.
 
     >>> x = 2; fmt('{x} {y}')
     '2 {y}'
