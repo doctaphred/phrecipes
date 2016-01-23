@@ -93,6 +93,39 @@ def defaultdivvy(iterable, predicate):
     return results
 
 
+def unique(iterable, key=None):
+    """Yield unique elements, preserving order."""
+    if key is None:
+        return _unique(iterable)
+    return _unique_key(iterable, key)
+
+
+def _unique(iterable):
+    """
+    >>> ''.join(_unique('AAAABBBCCDAABBB'))
+    'ABCD'
+    """
+    seen = set()
+    see = seen.add  # Avoid inner-loop name lookup
+    for element in filterfalse(seen.__contains__, iterable):
+        see(element)
+        yield element
+
+
+def _unique_key(iterable, key):
+    """
+    >>> ''.join(_unique_key('ABBCcAD', key=str.casefold))
+    'ABCD'
+    """
+    seen = set()
+    see = seen.add  # Avoid inner-loop name lookup
+    for element in iterable:
+        k = key(element)
+        if k not in seen:
+            see(k)
+            yield element
+
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
