@@ -77,7 +77,7 @@ def divvy(iterable, predicate):
 def defaultdivvy(iterable, predicate):
     """Divvy up an iterable into a defaultdict of sets.
 
-    >>> remainders = divvy(range(10), lambda x: x % 3)
+    >>> remainders = defaultdivvy(range(10), lambda x: x % 3)
     >>> for remainder, divisors in sorted(remainders.items()):
     ...     print(remainder, sorted(divisors))
     0 [0, 3, 6, 9]
