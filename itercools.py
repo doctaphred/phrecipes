@@ -4,6 +4,7 @@ for more cool recipes!
 """
 from collections import defaultdict
 from itertools import tee, filterfalse
+from functools import wraps
 
 
 def filters(iterable, *predicates):
@@ -128,6 +129,21 @@ def _unique_key(iterable, key):
         if k not in seen:
             see(k)
             yield element
+
+
+def reuse(gen_func):
+    """Reuse a generator!"""
+    history = []
+    gen = gen_func()
+
+    @wraps(gen_func)
+    def reusable():
+        yield from history
+        for element in gen:
+            history.append(element)
+            yield element
+
+    return reusable
 
 
 if __name__ == '__main__':
