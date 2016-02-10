@@ -181,11 +181,16 @@ class each:
     0
     >>> ''.join(each('abc').upper())
     'ABC'
+    >>> list(each('123').to(int))
+    [1, 2, 3]
     """
 
     def __init__(self, iterable, effect=None):
         self.__effect = effect
         self.__it = iterable
+
+    def to(self, func):
+        return each(self, func)
 
     def __getattr__(self, name):
         def effect(self):
