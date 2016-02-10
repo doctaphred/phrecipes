@@ -253,11 +253,6 @@ class each:
         for element in self:
             del element[name]
 
-    def __call__(self, *args, **kwargs):
-        def effect(self):
-            return self(*args, **kwargs)
-        return each(self, effect)
-
     def __iter__(self):
         if self.__effect is None:
             yield from self.__it
@@ -282,6 +277,7 @@ class each:
         '__abs__',
         '__add__',
         '__and__',
+        '__call__',
         # '__concat__',  # Not actually a real special method
         # '__contains__',  # `in` casts the return value to bool
         '__divmod__',
