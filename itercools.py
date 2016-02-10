@@ -3,9 +3,9 @@ See https://docs.python.org/3/library/itertools.html#itertools-recipes
 for more cool recipes!
 """
 from collections import defaultdict
-from functools import wraps
+from functools import partialmethod, wraps
 from itertools import tee, filterfalse
-from operator import attrgetter, itemgetter
+from operator import attrgetter, itemgetter, methodcaller
 
 
 def filters(iterable, *predicates):
@@ -186,6 +186,10 @@ class each:
     [1, 2, 3]
     >>> list(each(['123', '456'])[1].to(int))
     [2, 5]
+    >>> list(each('abc') == 'a')
+    [True, False, False]
+    >>> list(each(range(5)) < 3)
+    [True, True, True, False, False]
     """
 
     def __init__(self, iterable, effect=None):
@@ -213,6 +217,21 @@ class each:
             for thing in self.__it:
                 yield self.__effect(thing)
 
+    def _apply(self, name, *args, **kwargs):
+        return each(self, methodcaller(name, *args, **kwargs))
+
+    _broadcast_methods = [
+        '__lt__',
+        '__le__',
+        '__eq__',
+        '__ne__',
+        '__ge__',
+        '__gt__',
+        ]
+
+    for name in _broadcast_methods:
+        locals()[name] = partialmethod(_apply, name)
+    del name
 
 if __name__ == '__main__':
     import doctest
