@@ -5,6 +5,7 @@ for more cool recipes!
 from collections import defaultdict
 from functools import wraps
 from itertools import tee, filterfalse
+from operator import attrgetter
 
 
 def filters(iterable, *predicates):
@@ -193,9 +194,7 @@ class each:
         return each(self, func)
 
     def __getattr__(self, name):
-        def effect(self):
-            return getattr(self, name)
-        return each(self, effect)
+        return each(self, attrgetter(name))
 
     def __call__(self, *args, **kwargs):
         def effect(self):
