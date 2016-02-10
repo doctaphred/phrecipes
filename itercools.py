@@ -176,20 +176,43 @@ def reuse(gen_func):
 class each:
     """Generator expressions? Too verbose.
 
-    >>> list(each(range(5)).real)
-    [0, 1, 2, 3, 4]
+    >>> each(range(5)).real
+    <0, 1, 2, 3, 4>
     >>> sum(each(range(5)).imag)
     0
     >>> ''.join(each('abc').upper())
     'ABC'
-    >>> list(each('123').to(int))
-    [1, 2, 3]
-    >>> list(each(['123', '456'])[1].to(int))
-    [2, 5]
-    >>> list(each('abc') == 'a')
-    [True, False, False]
-    >>> list(each(range(5)) < 3)
-    [True, True, True, False, False]
+    >>> each('123').to(int)
+    <1, 2, 3>
+    >>> each(['123', '456'])[1].to(int)
+    <2, 5>
+    >>> each('abc') == 'a'
+    <True, False, False>
+    >>> each(range(5)) < 3
+    <True, True, True, False, False>
+    >>> 3 > each(range(5))
+    <True, True, True, False, False>
+    >>> each(range(5)) >= 3
+    <False, False, False, True, True>
+    >>> abs(each(range(-3, 3)))
+    <3, 2, 1, 0, 1, 2>
+
+    >>> e = each([{'a': 1}, {'a': 2}])
+    >>> e
+    <{'a': 1}, {'a': 2}>
+    >>> e.values().contains(1)
+    <True, False>
+    >>> e['a']
+    <1, 2>
+    >>> e['b'] = 2
+    >>> del e['a']
+    >>> e
+    <{'b': 2}, {'b': 2}>
+
+    >>> e['b'] += 1
+    Traceback (most recent call last):
+      ...
+    NotImplementedError: <class 'itercools.each'> does not support __iadd__
     """
 
     def __init__(self, iterable, effect=None):
@@ -199,11 +222,36 @@ class each:
     def to(self, func):
         return each(self, func)
 
+    def contains(self, value):
+        def effect(self):
+            return value in self
+        return each(self, effect)
+
     def __getattr__(self, name):
         return each(self, attrgetter(name))
 
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            return super().__setattr__(name, value)
+        for element in self:
+            setattr(self, name, value)
+
+    def __delattr__(self, name):
+        if name.startswith('_'):
+            return super().__delattr__(name)
+        for element in self:
+            delattr(self, name)
+
     def __getitem__(self, key):
         return each(self, itemgetter(key))
+
+    def __setitem__(self, name, value):
+        for element in self:
+            element[name] = value
+
+    def __delitem__(self, name):
+        for element in self:
+            del element[name]
 
     def __call__(self, *args, **kwargs):
         def effect(self):
@@ -218,7 +266,11 @@ class each:
                 yield self.__effect(thing)
 
     def _apply(self, name, *args, **kwargs):
+        # TODO: Joe says use operator.X instead of methodcaller
         return each(self, methodcaller(name, *args, **kwargs))
+
+    def __repr__(self):
+        return '<{}>'.format(', '.join(self.to(repr)))
 
     _broadcast_methods = [
         '__lt__',
@@ -227,11 +279,72 @@ class each:
         '__ne__',
         '__ge__',
         '__gt__',
+        '__abs__',
+        '__add__',
+        '__and__',
+        # '__concat__',  # Not actually a real special method
+        # '__contains__',  # `in` casts the return value to bool
+        '__divmod__',
+        '__floordiv__',
+        # '__index__',  # Must return an int
+        '__inv__',
+        '__invert__',
+        # '__len__',  # Must return an int
+        '__lshift__',
+        '__mod__',
+        '__mul__',
+        '__matmul__',
+        '__neg__',
+        '__or__',
+        '__pos__',
+        '__pow__',
+        '__rshift__',
+        '__sub__',
+        '__truediv__',
+        '__xor__',
+
+        # TODO: ?
+        # '__missing__',
+        # '__reversed__',
+
+        # TODO: do I dare?
+        # '__enter__',
+        # '__exit__',
+
+        # TODO: metaclass with these:
+        # '__instancecheck__',
+        # '__subclasscheck__',
         ]
 
     for name in _broadcast_methods:
         locals()[name] = partialmethod(_apply, name)
     del name
+
+    def _nope(self, name, *args, **kwargs):
+        raise NotImplementedError(
+            '{0.__class__} does not support {1}'.format(self, name))
+
+    # TODO: make these work
+    _unsupported_methods = [
+        '__iadd__',
+        '__iand__',
+        '__iconcat__',
+        '__ifloordiv__',
+        '__ilshift__',
+        '__imod__',
+        '__imul__',
+        '__imatmul__',
+        '__ior__',
+        '__ipow__',
+        '__irshift__',
+        '__isub__',
+        '__itruediv__',
+        '__ixor__',
+        ]
+    for name in _unsupported_methods:
+        locals()[name] = partialmethod(_nope, name)
+    del name
+
 
 if __name__ == '__main__':
     import doctest
