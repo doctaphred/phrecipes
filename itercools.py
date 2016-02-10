@@ -172,6 +172,39 @@ def reuse(gen_func):
     return reusable
 
 
+class each:
+    """Generator expressions? Too verbose.
+
+    >>> list(each(range(5)).real)
+    [0, 1, 2, 3, 4]
+    >>> sum(each(range(5)).imag)
+    0
+    >>> ''.join(each('abc').upper())
+    'ABC'
+    """
+
+    def __init__(self, iterable, effect=None):
+        self.__effect = effect
+        self.__it = iterable
+
+    def __getattr__(self, name):
+        def effect(self):
+            return getattr(self, name)
+        return each(self, effect)
+
+    def __call__(self, *args, **kwargs):
+        def effect(self):
+            return self(*args, **kwargs)
+        return each(self, effect)
+
+    def __iter__(self):
+        if self.__effect is None:
+            yield from self.__it
+        else:
+            for thing in self.__it:
+                yield self.__effect(thing)
+
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
