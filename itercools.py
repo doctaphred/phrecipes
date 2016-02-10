@@ -176,6 +176,8 @@ def reuse(gen_func):
 class each:
     """Generator expressions? Too verbose.
 
+    >>> each('123', int)
+    <1, 2, 3>
     >>> each(range(5)).real
     <0, 1, 2, 3, 4>
     >>> sum(each(range(5)).imag)
@@ -220,15 +222,13 @@ class each:
         self.__it = iterable
 
     def to(self, func):
-        return each(self, func)
+        return self.__class__(self, func)
 
     def contains(self, value):
-        def effect(self):
-            return value in self
-        return each(self, effect)
+        return self.to(lambda self: value in self)
 
     def __getattr__(self, name):
-        return each(self, attrgetter(name))
+        return self.to(attrgetter(name))
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
@@ -243,7 +243,7 @@ class each:
             delattr(self, name)
 
     def __getitem__(self, key):
-        return each(self, itemgetter(key))
+        return self.to(itemgetter(key))
 
     def __setitem__(self, name, value):
         for element in self:
@@ -262,7 +262,7 @@ class each:
 
     def _apply(self, name, *args, **kwargs):
         # TODO: Joe says use operator.X instead of methodcaller
-        return each(self, methodcaller(name, *args, **kwargs))
+        return self.to(methodcaller(name, *args, **kwargs))
 
     def __repr__(self):
         return '<{}>'.format(', '.join(self.to(repr)))
