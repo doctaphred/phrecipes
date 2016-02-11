@@ -160,21 +160,19 @@ def record(iterable, history=None):
 
 def remember(gen_func):
     """Remember and reuse a generator's output."""
-    histories = defaultdict(list)
-    generators = {}
+    memory = {}
 
     @wraps(gen_func)
     def rememberer(*args, **kwargs):
         key = _make_key(args, kwargs, True)
+        if key not in memory:
+            memory[key] = [], gen_func(*args, **kwargs)
+        seen, unseen = memory[key]
+        see = seen.append  # Avoid inner-loop name lookup
 
-        history = histories[key]
-        yield from history
-
-        if key not in generators:
-            generators[key] = gen_func(*args, **kwargs)
-
-        for element in generators[key]:
-            history.append(element)
+        yield from seen
+        for element in unseen:
+            see(element)
             yield element
 
     return rememberer
