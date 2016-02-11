@@ -107,6 +107,16 @@ def instance_cached(cls=None, *, cache_func=weak_cached):
     ... class Test:
     ...     pass
 
+    >>> Test() is Test()
+    True
+    >>> Test.__new__.__qualname__
+    'object.__new__'
+    >>> Test.__init__.__qualname__
+    'object.__init__'
+
+    TODO: make the new constructor's signature match the original.
+    (This section of doctests should fail to execute.)
+
     >>> Test(1) is Test(1)
     True
     >>> t = Test(1)
@@ -119,10 +129,35 @@ def instance_cached(cls=None, *, cache_func=weak_cached):
     >>> del t
     >>> Test(1) is Test(1)
     True
-    >>> Test.__new__.__qualname__
-    'object.__new__'
-    >>> Test.__init__.__qualname__
-    'object.__init__'
+
+    Can be used with other caching functions, which may behave differently:
+
+    >>> from functools import lru_cache
+    >>> @instance_cached(cache_func=lru_cache(maxsize=1))
+    ... class Test:
+    ...     def __new__(cls, value):
+    ...         print('__new__', value)
+    ...         return object.__new__(cls)
+    ...     def __init__(self, value):
+    ...         print('__init__', value)
+    ...         self.value = value
+
+    >>> Test(1) is Test(1)
+    __new__ 1
+    __init__ 1
+    True
+    >>> t = Test(1)  # The LRU cache persists...
+    >>> t is Test(1)
+    True
+    >>> t2 = Test(2)
+    __new__ 2
+    __init__ 2
+    >>> Test(1) is Test(2)  # ...but, it can only remember a single item.
+    __new__ 1
+    __init__ 1
+    __new__ 2
+    __init__ 2
+    False
 
     TODO: handle default arguments.
     """
