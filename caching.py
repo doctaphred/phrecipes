@@ -101,35 +101,6 @@ def instance_cached(cls=None, *, cache_func=weak_cached):
     >>> Test.__init__.__qualname__
     'Test.__init__'
 
-    Also works for classes that don't override __new__ or __init__:
-
-    >>> @instance_cached
-    ... class Test:
-    ...     pass
-
-    >>> Test() is Test()
-    True
-    >>> Test.__new__.__qualname__
-    'object.__new__'
-    >>> Test.__init__.__qualname__
-    'object.__init__'
-
-    TODO: make the new constructor's signature match the original.
-    (This section of doctests should fail to execute.)
-
-    >>> Test(1) is Test(1)
-    True
-    >>> t = Test(1)
-    >>> t is Test(1)
-    True
-    >>> Test(1) is Test(1)
-    True
-    >>> Test(1) is Test(2)
-    False
-    >>> del t
-    >>> Test(1) is Test(1)
-    True
-
     Can be used with other caching functions, which may behave differently:
 
     >>> from functools import lru_cache
@@ -159,22 +130,72 @@ def instance_cached(cls=None, *, cache_func=weak_cached):
     __init__ 2
     False
 
+    Also works for classes that don't override __new__ or __init__:
+
+    >>> @instance_cached
+    ... class Test:
+    ...     pass
+
+    >>> Test() is Test()
+    True
+    >>> Test.__new__.__qualname__
+    'object.__new__'
+    >>> Test.__init__.__qualname__
+    'object.__init__'
+    >>> Test(None)
+    Traceback (most recent call last):
+      ...
+    TypeError: object() takes no parameters
+
+    >>> @instance_cached
+    ... class Test:
+    ...     def __new__(cls, whatever):
+    ...         return object.__new__(cls)
+
+    >>> Test(None) is Test(None)
+    True
+    >>> Test.__new__.__qualname__
+    'Test.__new__'
+    >>> Test.__init__.__qualname__
+    'object.__init__'
+    >>> Test()
+    Traceback (most recent call last):
+      ...
+    TypeError: __new__() missing 1 required positional argument: 'whatever'
+
+    >>> @instance_cached
+    ... class Test:
+    ...     def __init__(cls, whatever):
+    ...         pass
+
+    >>> Test(None) is Test(None)
+    True
+    >>> Test.__new__.__qualname__
+    'object.__new__'
+    >>> Test.__init__.__qualname__
+    'Test.__init__'
+    >>> Test()
+    Traceback (most recent call last):
+      ...
+    TypeError: __init__() missing 1 required positional argument: 'whatever'
+
     TODO: handle default arguments.
     """
     # Allow this decorator to work with or without being called
     if cls is None:
         return partial(instance_cached, cache_func=cache_func)
 
-    if cls.__new__ is object.__new__:
-        # object.__new__ only accepts the single cls argument
+    overridden_new = cls.__new__ is not object.__new__
+    overridden_init = cls.__init__ is not object.__init__
+
+    if overridden_init and not overridden_new:
         @wraps(object.__new__)
         def old_new(cls, *args, **kwargs):
             return object.__new__(cls)
     else:
         old_new = cls.__new__
 
-    if cls.__init__ is object.__init__:
-        # object.__init__ only accepts the single self argument
+    if overridden_new and not overridden_init:
         @wraps(object.__init__)
         def old_init(self, *args, **kwargs):
             return object.__init__(self)
