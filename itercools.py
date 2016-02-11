@@ -3,7 +3,7 @@ See https://docs.python.org/3/library/itertools.html#itertools-recipes
 for more cool recipes!
 """
 from collections import defaultdict
-from functools import partialmethod, wraps
+from functools import _make_key, partialmethod, wraps
 from itertools import tee, filterfalse
 from operator import attrgetter, itemgetter, methodcaller
 
@@ -160,13 +160,20 @@ def record(iterable, history=None):
 
 def remember(gen_func):
     """Remember and reuse a generator's output."""
-    history = []
-    gen = gen_func()
+    histories = defaultdict(list)
+    generators = {}
 
     @wraps(gen_func)
-    def rememberer():
+    def rememberer(*args, **kwargs):
+        key = _make_key(args, kwargs, True)
+
+        history = histories[key]
         yield from history
-        for element in gen:
+
+        if key not in generators:
+            generators[key] = gen_func(*args, **kwargs)
+
+        for element in generators[key]:
             history.append(element)
             yield element
 
