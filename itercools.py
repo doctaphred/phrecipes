@@ -132,10 +132,10 @@ def _unique_key(iterable, key):
             yield element
 
 
-def remember(iterable, history=None):
+def record(iterable, history=None):
     """Record an iterable's output in a list as it is traversed.
 
-    >>> it, history = remember(range(5))
+    >>> it, history = record(range(5))
     >>> next(it)
     0
     >>> next(it)
@@ -151,26 +151,26 @@ def remember(iterable, history=None):
         history = []
 
     def recorder():
-        for x in iter(iterable):
-            history.append(x)
-            yield x
+        for element in iter(iterable):
+            history.append(element)
+            yield element
 
     return recorder(), history
 
 
-def reuse(gen_func):
-    """Reuse a generator!"""
+def remember(gen_func):
+    """Remember and reuse a generator's output."""
     history = []
     gen = gen_func()
 
     @wraps(gen_func)
-    def reusable():
+    def rememberer():
         yield from history
         for element in gen:
             history.append(element)
             yield element
 
-    return reusable
+    return rememberer
 
 
 class each:
