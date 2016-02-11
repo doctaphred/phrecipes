@@ -32,12 +32,11 @@ def weak_cached(func=None, *, key_func=freeze):
     @wraps(func)
     def wrapper(*args, **kwargs):
         key = key_func(*args, **kwargs)
-        if key not in cache:
-            result = func(*args, **kwargs)
-            cache[key] = result
-        else:
-            result = cache[key]
-        return result
+        try:
+            return cache[key]
+        except KeyError:
+            cache[key] = result = func(*args, **kwargs)
+            return result
 
     wrapper._cache = cache
     wrapper._cache_key = key_func
