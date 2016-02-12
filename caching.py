@@ -165,7 +165,7 @@ def instance_cached(cls=None, *, cache_func=weak_cached):
 
     >>> @instance_cached
     ... class Test:
-    ...     def __init__(cls, whatever):
+    ...     def __init__(self, whatever):
     ...         pass
 
     >>> Test(None) is Test(None)
