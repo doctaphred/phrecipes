@@ -45,6 +45,18 @@ class CascadingDict:
 
     >>> {**d4}
     {'a': 1}
+
+    Actually, maybe it's not so bad:
+
+    >>> default = CascadingDict(
+    ...     notify='alert@saas.com',
+    ...     customer='customer@localhost')
+    >>> dev = default(notify='alert@localhost')
+    >>> prod = default(customer='customer@customer.com')
+    >>> prod
+    CascadingDict(customer='customer@customer.com', [notify='alert@saas.com'])
+    >>> dev
+    CascadingDict(notify='alert@localhost', [customer='customer@localhost'])
     """
 
     parent = None
@@ -100,11 +112,11 @@ class CascadingDict:
 
     def __repr__(self):
         own = ', '.join(
-            '{}={}'.format(key, value)
+            '{}={!r}'.format(key, value)
             for key, value in self.contents.items())
 
         inherited = ', '.join(
-            '{}={}'.format(key, value)
+            '{}={!r}'.format(key, value)
             for key, value in self.inherited_items())
 
         if own and inherited:
