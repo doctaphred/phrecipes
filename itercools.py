@@ -77,9 +77,11 @@ def divvy(iterable, predicate):
     results = {}
     for item in iterable:
         result = predicate(item)
-        if result not in results:
-            results[result] = set()
-        results[result].add(item)
+        try:
+            bag = results[result]
+        except KeyError:
+            results[result] = bag = set()
+        bag.add(item)
     return results
 
 
@@ -165,9 +167,10 @@ def remember(gen_func):
     @wraps(gen_func)
     def rememberer(*args, **kwargs):
         key = _make_key(args, kwargs, True)
-        if key not in memory:
-            memory[key] = [], gen_func(*args, **kwargs)
-        seen, unseen = memory[key]
+        try:
+            seen, unseen = memory[key]
+        except KeyError:
+            memory[key] = seen, unseen = [], gen_func(*args, **kwargs)
         see = seen.append  # Avoid inner-loop name lookup
 
         yield from seen
