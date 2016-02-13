@@ -204,6 +204,11 @@ class each:
     >>> abs(each(range(-3, 3)))
     <3, 2, 1, 0, 1, 2>
 
+    >>> each([range(1), range(2)]).contains(0, 1)
+    <False, True>
+    >>> each(range(5)).is_in(range(1, 3))
+    <False, True, True, False, False>
+
     >>> e = each([{'a': 1}, {'a': 2}])
     >>> e
     <{'a': 1}, {'a': 2}>
@@ -229,8 +234,15 @@ class each:
     def to(self, func):
         return self.__class__(self, func)
 
-    def contains(self, value):
-        return self.to(lambda self: value in self)
+    def contains(self, *values, fold=all):
+        def effect(self):
+            return fold(value in self for value in values)
+        return self.to(effect)
+
+    def is_in(self, *containers, fold=all):
+        def effect(self):
+            return fold(self in container for container in containers)
+        return self.to(effect)
 
     def __getattr__(self, name):
         return self.to(attrgetter(name))
