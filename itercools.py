@@ -185,44 +185,44 @@ class each:
     """Generator expressions? Too verbose.
 
     >>> each('123', int)
-    <1, 2, 3>
+    each([1, 2, 3])
     >>> each(range(5)).real
-    <0, 1, 2, 3, 4>
+    each([0, 1, 2, 3, 4])
     >>> sum(each(range(5)).imag)
     0
     >>> ''.join(each('abc').upper())
     'ABC'
     >>> each('123').to(int)
-    <1, 2, 3>
+    each([1, 2, 3])
     >>> each(['123', '456'])[1].to(int)
-    <2, 5>
+    each([2, 5])
     >>> each('abc') == 'a'
-    <True, False, False>
+    each([True, False, False])
     >>> each(range(5)) < 3
-    <True, True, True, False, False>
+    each([True, True, True, False, False])
     >>> 3 > each(range(5))
-    <True, True, True, False, False>
+    each([True, True, True, False, False])
     >>> each(range(5)) >= 3
-    <False, False, False, True, True>
+    each([False, False, False, True, True])
     >>> abs(each(range(-3, 3)))
-    <3, 2, 1, 0, 1, 2>
+    each([3, 2, 1, 0, 1, 2])
 
     >>> each([range(1), range(2)]).contains(0, 1)
-    <False, True>
+    each([False, True])
     >>> each(range(5)).is_in(range(1, 3))
-    <False, True, True, False, False>
+    each([False, True, True, False, False])
 
     >>> e = each([{'a': 1}, {'a': 2}])
     >>> e
-    <{'a': 1}, {'a': 2}>
+    each([{'a': 1}, {'a': 2}])
     >>> e.values().contains(1)
-    <True, False>
+    each([True, False])
     >>> e['a']
-    <1, 2>
+    each([1, 2])
     >>> e['b'] = 2
     >>> del e['a']
     >>> e
-    <{'b': 2}, {'b': 2}>
+    each([{'b': 2}, {'b': 2}])
 
     >>> e['b'] += 1
     Traceback (most recent call last):
@@ -251,7 +251,7 @@ class each:
         """Call this method directly to access overloaded names.
 
         >>> each('spam').to
-        <bound method each.to of <'s', 'p', 'a', 'm'>>
+        <bound method each.to of each(['s', 'p', 'a', 'm'])>
         >>> each('spam').__getattr__('to')
         Traceback (most recent call last):
           ...
@@ -294,7 +294,7 @@ class each:
         return self.to(methodcaller(name, *args, **kwargs))
 
     def __repr__(self):
-        return '<{}>'.format(', '.join(self.to(repr)))
+        return 'each([{}])'.format(', '.join(self.to(repr)))
 
     _broadcast_methods = [
         '__lt__',
