@@ -3,7 +3,7 @@ See https://docs.python.org/3/library/itertools.html#itertools-recipes
 for more cool recipes!
 """
 from collections import defaultdict
-from functools import _make_key, partialmethod, wraps
+from functools import _make_key, partial, partialmethod, wraps
 from itertools import tee, filterfalse
 from operator import attrgetter, itemgetter, methodcaller
 
@@ -234,8 +234,8 @@ class each:
         self.__effect = effect
         self.__it = iterable
 
-    def to(self, func):
-        return self.__class__(self, func)
+    def to(self, func, *args, **kwargs):
+        return self.__class__(self, partial(func, *args, **kwargs))
 
     def contains(self, *values, fold=all):
         def effect(self):
