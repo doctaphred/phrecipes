@@ -2,9 +2,9 @@ class CascadingDict:
     """Please never actually use this.
 
     >>> d1 = CascadingDict(a=1)
-    >>> d2 = d1(a=2)
-    >>> d3 = d1(a=3)
-    >>> d4 = d2(b=4)
+    >>> d2 = d1.extend(a=2)
+    >>> d3 = d1.extend(a=3)
+    >>> d4 = d2.extend(b=4)
 
     >>> d2
     CascadingDict(a=2)
@@ -18,12 +18,12 @@ class CascadingDict:
     CascadingDict(a=3)
     >>> d4
     CascadingDict(b=4, [a=5])
-    >>> d5 = d4(c=7)
+    >>> d5 = d4.extend(c=7)
     >>> d5
     CascadingDict(c=7, [b=4, a=5])
     >>> list(d5.items())
     [('c', 7), ('b', 4), ('a', 5)]
-    >>> d5(b=2)
+    >>> d5.extend(b=2)
     CascadingDict(b=2, [c=7, a=5])
     >>> del d4['a']
     Traceback (most recent call last):
@@ -51,8 +51,8 @@ class CascadingDict:
     >>> default = CascadingDict(
     ...     notify='alert@saas.com',
     ...     customer='customer@localhost')
-    >>> dev = default(notify='alert@localhost')
-    >>> prod = default(customer='customer@customer.com')
+    >>> dev = default.extend(notify='alert@localhost')
+    >>> prod = default.extend(customer='customer@customer.com')
     >>> prod
     CascadingDict(customer='customer@customer.com', [notify='alert@saas.com'])
     >>> dev
@@ -64,7 +64,7 @@ class CascadingDict:
     def __init__(self, **items):
         self.contents = items
 
-    def __call__(self, **items):
+    def extend(self, **items):
         new = self.__class__(**items)
         new.parent = self
         return new
