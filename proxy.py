@@ -148,6 +148,17 @@ class Proxy:
     Traceback (most recent call last):
       ...
     AttributeError: 'dict' object has no attribute 'delegate'
+
+    TODO: fix these:
+    >>> p = Proxy(1)
+    >>> p + p
+    Traceback (most recent call last):
+      ...
+    TypeError: unsupported operand type(s) for +: 'Proxy' and 'Proxy'
+    >>> p += 1
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'int' object has no attribute '__iadd__'
     """
 
     def __init__(self, obj):
@@ -232,8 +243,66 @@ class PrintingProxy(Proxy):
     >>> len(PrintingProxy([]))
     looking for __len__
     0
+
+    >>> p1 = PrintingProxy(1)
+    >>> p1
+    looking for __repr__
+    1
+    >>> p1 + 1
+    looking for __add__
+    2
+    >>> 1 + p1
+    looking for __radd__
+    2
+    >>> sum([p1, 1])
+    looking for __radd__
+    2
+    >>> sum([1, p1])
+    looking for __radd__
+    2
     """
 
     def wrapper(self, wrapped, name):
         print('looking for', name)
         return getattr(wrapped, name)
+
+
+class CallbackProxy:
+    """Invoke a callback every time the proxy's value is accessed.
+
+    TODO: replace regular Proxy
+
+    LOL WUT:
+    >>> x = CallbackProxy(iter(range(10)).__next__)
+    >>> x
+    0
+    >>> x
+    1
+    >>> x
+    2
+    """
+
+    def __init__(self, callback):
+        super().__setattr__('callback', callback)
+
+    def __getattribute__(self, name):
+        obj = super().__getattribute__('callback')()
+        return getattr(obj, name)
+
+    # Certain implicit invocations of special methods may bypass
+    # __getattribute__: for example, `len(Proxy([]))` invokes
+    # Proxy.__len__ directly.
+
+    # Solution: make sure all accesses are properly forwarded by
+    # defining each special method on the Proxy class and invoking
+    # Proxy.__getattribute__ from within.
+
+    def delegate(self, name, *args, **kwargs):
+        # I literally have no idea how this works anymore.
+        return getattr(self, name)(*args, **kwargs)
+
+    for name in special_method_names:
+        locals()[name] = partialmethod(delegate, name)
+        # Clean up temporary variable
+        # (NameError if done outside an empty loop)
+        del name
