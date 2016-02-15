@@ -155,8 +155,6 @@ class Proxy:
 
     def __getattribute__(self, name):
         wrapped = super().__getattribute__('__wrapped__')
-        if name == '__wrapped__':
-            return wrapped
         return super().__getattribute__('wrapped_getattr')(wrapped, name)
 
     def wrapped_getattr(self, wrapped, name):
