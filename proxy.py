@@ -155,9 +155,10 @@ class Proxy:
 
     def __getattribute__(self, name):
         wrapped = super().__getattribute__('__wrapped__')
-        return super().__getattribute__('wrapped_getattr')(wrapped, name)
+        wrapper = super().__getattribute__('wrapper')
+        return wrapper(wrapped, name)
 
-    def wrapped_getattr(self, wrapped, name):
+    def wrapper(self, wrapped, name):
         return getattr(wrapped, name)
 
     # Certain implicit invocations of special methods may bypass
@@ -233,6 +234,6 @@ class PrintingProxy(Proxy):
     0
     """
 
-    def wrapped_getattr(self, wrapped, name):
+    def wrapper(self, wrapped, name):
         print('looking for', name)
         return getattr(wrapped, name)
