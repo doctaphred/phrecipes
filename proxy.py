@@ -47,7 +47,6 @@ special_method_names = (
     '__reversed__',
     '__contains__',  # `in` casts the return value to bool
 
-
     # Numeric types
     '__add__',
     '__sub__',
@@ -79,20 +78,6 @@ special_method_names = (
     '__ror__',
     '__rxor__',
 
-    '__iadd__',
-    '__isub__',
-    '__imul__',
-    '__imatmul__',
-    '__itruediv__',
-    '__ifloordiv__',
-    '__imod__',
-    '__ipow__',
-    '__ilshift__',
-    '__irshift__',
-    '__iand__',
-    '__ior__',
-    '__ixor__',
-
     '__neg__',
     '__pos__',
     '__abs__',
@@ -108,6 +93,23 @@ special_method_names = (
 
     '__enter__',
     '__exit__',
+    )
+
+
+inplace_method_names = (
+    '__iadd__',
+    '__isub__',
+    '__imul__',
+    '__imatmul__',
+    '__itruediv__',
+    '__ifloordiv__',
+    '__imod__',
+    '__ipow__',
+    '__ilshift__',
+    '__irshift__',
+    '__iand__',
+    '__ior__',
+    '__ixor__',
     )
 
 
@@ -155,10 +157,67 @@ class Proxy:
     Traceback (most recent call last):
       ...
     TypeError: unsupported operand type(s) for +: 'Proxy' and 'Proxy'
+
+    If the wrapped object does not define an in-place operation (e.g.,
+    immutable types like int and str), the proxy substitutes the
+    non-in-place version and updates its wrapped object to the result:
+
+    >>> p = Proxy(1)
+    >>> type(p)
+    <class 'proxy.Proxy'>
+    >>> p.__class__
+    <class 'int'>
+    >>> p
+    1
     >>> p += 1
+    >>> type(p)
+    <class 'proxy.Proxy'>
+    >>> p.__class__
+    <class 'int'>
+    >>> p
+    2
+
+    >>> p = Proxy(set([1]))
+    >>> type(p)
+    <class 'proxy.Proxy'>
+    >>> p -= {1}
+    >>> type(p)
+    <class 'proxy.Proxy'>
+    >>> p.__class__
+    <class 'set'>
+    >>> p
+    set()
+
+    TODO: make the following two tests instead raise:
+    TypeError: unsupported operand type(s) for +=: 'set' and 'set'
+
+    >>> p += set([2])
     Traceback (most recent call last):
       ...
-    AttributeError: 'int' object has no attribute '__iadd__'
+    AttributeError: 'set' object has no attribute '__add__'
+    >>> p + set([2])
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'set' object has no attribute '__add__'
+
+    # TODO:
+    # Special methods in proxied objects are looked up in the usual way,
+    # via getattr(type(obj), name):
+
+    # >>> class C:
+    # ...     pass
+    # ...
+    # >>> c = C()
+    # >>> c.__len__ = lambda: 5
+    # >>> len(c)
+    # Traceback (most recent call last):
+    #   ...
+    # TypeError: object of type 'C' has no len()
+    # >>> p = Proxy(c)
+    # >>> len(p)
+    # Traceback (most recent call last):
+    #   ...
+    # TypeError: object of type 'C' has no len()
     """
 
     def __init__(self, obj):
@@ -188,6 +247,21 @@ class Proxy:
         locals()[name] = partialmethod(delegate, name)
         # Clean up temporary variable
         # (NameError if done outside an empty loop)
+        del name
+
+    def inplace_delegate(self, name, *args, **kwargs):
+        try:
+            attr = getattr(self, name)
+        except AttributeError:
+            # If the in-place version was not found, fall back to the
+            # regular version
+            attr = getattr(self, name.replace('i', '', 1))  # ZOMG HAX
+        new_obj = attr(*args, **kwargs)
+        super().__setattr__('__wrapped__', new_obj)
+        return self
+
+    for name in inplace_method_names:
+        locals()[name] = partialmethod(inplace_delegate, name)
         del name
 
 
@@ -301,7 +375,7 @@ class CallbackProxy:
         # I literally have no idea how this works anymore.
         return getattr(self, name)(*args, **kwargs)
 
-    for name in special_method_names:
+    for name in special_method_names + inplace_method_names:
         locals()[name] = partialmethod(delegate, name)
         # Clean up temporary variable
         # (NameError if done outside an empty loop)
