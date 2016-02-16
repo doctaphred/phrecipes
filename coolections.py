@@ -6,6 +6,13 @@ class CascadingDict:
     >>> d3 = d1.extend(a=3)
     >>> d4 = d2.extend(b=4)
 
+    >>> d1['a']
+    1
+    >>> d1['b']
+    Traceback (most recent call last):
+      ...
+    KeyError: 'b'
+
     >>> d2
     CascadingDict(a=2)
     >>> d2['a'] = 5
@@ -76,6 +83,7 @@ class CascadingDict:
             if name in contents:
                 return contents[name]
             obj = obj.parent
+        raise KeyError(name)
 
     def __setitem__(self, name, value):
         self.contents[name] = value
