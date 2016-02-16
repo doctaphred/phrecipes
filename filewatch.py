@@ -1,7 +1,7 @@
 import time
 from importlib import reload
 from pathlib import Path
-from threading import Thread
+from threading import Thread, Lock
 
 
 def _watch(callback, path, interval):
@@ -52,6 +52,42 @@ def autoreload(module, interval=0.5):
     See watch.
     """
     watch(lambda _: reload(module), module.__file__, interval=interval)
+
+
+class FreshFile:
+    """Each call to FreshFile.read returns the file's current contents.
+
+    Polls the file every interval seconds in a separate thread.
+
+    See watch.
+    """
+
+    def __init__(self, path, interval=0.5):
+        self.path = path
+        self._lock = Lock()
+        self.refresh()
+        watch(lambda _: self.unfreshen(), path, interval=interval)
+
+    @property
+    def fresh(self):
+        return self._fresh
+
+    def refresh(self):
+        """Re-read file from disk."""
+        with self._lock:
+            with open(self.path) as f:
+                self._contents = f.read()
+            self._fresh = True
+
+    def unfreshen(self):
+        with self._lock:
+            self._fresh = False
+
+    def read(self):
+        """Return the current contents of the file."""
+        if not self._fresh:
+            self.refresh()
+        return self._contents
 
 
 if __name__ == '__main__':
