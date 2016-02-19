@@ -3,7 +3,7 @@ See https://docs.python.org/3/library/itertools.html#itertools-recipes
 for more cool recipes!
 """
 from collections import defaultdict
-from functools import _make_key, partial, partialmethod, wraps
+from functools import lru_cache, partial, partialmethod, wraps
 from itertools import tee, filterfalse
 from operator import attrgetter, itemgetter, methodcaller
 
@@ -134,27 +134,29 @@ def _unique_key(iterable, key):
             yield element
 
 
+def reuse(func=None, *, cache=lru_cache(maxsize=None, typed=True)):
+    """Cache and reuse a generator function across multiple calls."""
+    # Allow this decorator to work with or without being called
+    if func is None:
+        return partial(reuse, cache=cache)
 
+    # Either initialize an empty history and start a new generator, or
+    # retrieve an existing history and the already-started generator
+    # that produced it
+    @cache
+    def resume(*args, **kwargs):
+        return [], func(*args, **kwargs)
 
-def remember(gen_func):
-    """Remember and reuse a generator's output."""
-    memory = {}
+    @wraps(func)
+    def reuser(*args, **kwargs):
+        history, gen = resume(*args, **kwargs)
+        yield from history
+        record = history.append  # Avoid inner-loop name lookup
+        for x in gen:
+            record(x)
+            yield x
 
-    @wraps(gen_func)
-    def rememberer(*args, **kwargs):
-        key = _make_key(args, kwargs, True)
-        try:
-            seen, unseen = memory[key]
-        except KeyError:
-            memory[key] = seen, unseen = [], gen_func(*args, **kwargs)
-        see = seen.append  # Avoid inner-loop name lookup
-
-        yield from seen
-        for element in unseen:
-            see(element)
-            yield element
-
-    return rememberer
+    return reuser
 
 
 class each:
