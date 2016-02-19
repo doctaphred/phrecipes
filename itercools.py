@@ -134,7 +134,7 @@ def _unique_key(iterable, key):
             yield element
 
 
-def reuse(func=None, *, cache=lru_cache(maxsize=None, typed=True)):
+def reuse(func=None, *, cache=lru_cache()):
     """Cache and reuse a generator function across multiple calls."""
     # Allow this decorator to work with or without being called
     if func is None:
