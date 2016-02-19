@@ -3,9 +3,8 @@ See https://docs.python.org/3/library/itertools.html#itertools-recipes
 for more cool recipes!
 """
 from collections import defaultdict
-from functools import lru_cache, partial, partialmethod, wraps
+from functools import lru_cache, partial, wraps
 from itertools import tee, filterfalse
-from operator import attrgetter, itemgetter, methodcaller
 
 
 def filters(iterable, *predicates):
