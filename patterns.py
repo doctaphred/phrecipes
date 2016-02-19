@@ -128,8 +128,8 @@ class Pattern:
     # def __hash__(self):
     #     return hash(self.conditions)
 
-    def __add__(self, new_constraint):
-        return self.__class__(self.conditions | {new_constraint})
+    def __add__(self, new_condition):
+        return self.__class__(self.conditions | {new_condition})
 
     def __or__(self, other):
         return self.__class__(self.conditions | other.conditions)
@@ -144,8 +144,8 @@ class Pattern:
         return self.__class__(self.conditions - other.conditions)
 
     def __repr__(self):
-        constraint_expressions = sorted(str(c) for c in self.conditions)
-        return 'Pattern({{{}}})'.format(', '.join(constraint_expressions))
+        condition_strs = sorted(str(c) for c in self.conditions)
+        return 'Pattern({{{}}})'.format(', '.join(condition_strs))
 
     def to(self, func, *args, **kwargs):
         return self + Condition(partial(func, *args, **kwargs))
