@@ -25,22 +25,29 @@ def csv_data(filepath, **conversions):
     ...          **{'Column Header With Spaces': arbitrary_function})
     """
 
-    def parse_value(key, value):
-        if key in conversions:
-            return conversions[key](value)
+    def convert(key, value):
+        try:
+            conversion = conversions[key]
+        except KeyError:
+            pass
+        else:
+            return conversion(value)
+
         try:
             # Interpret the string as a Python literal
             return literal_eval(value)
-        except Exception:
-            # If that doesn't work, assume it's an unquoted string
-            return value
+        except (SyntaxError, TypeError, ValueError):
+            pass
+
+        # If nothing else worked, assume it's an unquoted string
+        return value
 
     with open(filepath) as f:
         # QUOTE_NONE: don't process quote characters, to avoid the value
         # `"2"` becoming the int `2`, rather than the string `'2'`.
         for row in DictReader(f, quoting=csv.QUOTE_NONE):
-            yield {k: parse_value(k, v) for k, v in row.items()}
+            yield {k: convert(k, v) for k, v in row.items()}
         # TODO: consider eager or partially-eager approaches to avoid
         # excessive disk calls:
-        # return [{k: parse_value(k, v) for k, v in row.items()}
+        # return [{k: convert(k, v) for k, v in row.items()}
         #         for row in DictReader(f, quoting=csv.QUOTE_NONE)]
