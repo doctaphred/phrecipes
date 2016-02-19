@@ -12,10 +12,10 @@ comparisons = (
     )
 
 
-class Condition:
+class Constraint:
     """
     >>> from operator import *
-    >>> c = Condition(eq, 2)
+    >>> c = Constraint(eq, 2)
     >>> c
     eq(value, 2)
     >>> c(2)
@@ -25,7 +25,7 @@ class Condition:
     >>> c('spam')
     False
 
-    >>> c = Condition(le, 2)
+    >>> c = Constraint(le, 2)
     >>> c
     le(value, 2)
     >>> c(2)
@@ -116,8 +116,8 @@ class Pattern:
     False
     """
 
-    def __init__(self, conditions):
-        self.conditions = conditions
+    def __init__(self, constraints):
+        self.constraints = constraints
 
     @classmethod
     def anything(cls):
@@ -126,42 +126,39 @@ class Pattern:
     # TODO: does this work with overridden __eq__?
     # (Answer: no; TODO: what to do instead?)
     # def __hash__(self):
-    #     return hash(self.conditions)
+    #     return hash(self.constraints)
 
     def __add__(self, new_constraint):
-        return self.__class__(self.conditions | {new_constraint})
+        return self.__class__(self.constraints | {new_constraint})
 
     def __or__(self, other):
-        return self.__class__(self.conditions | other.conditions)
+        return self.__class__(self.constraints | other.constraints)
 
     def __and__(self, other):
-        return self.__class__(self.conditions & other.conditions)
+        return self.__class__(self.constraints & other.constraints)
 
     def __xor__(self, other):
-        return self.__class__(self.conditions ^ other.conditions)
+        return self.__class__(self.constraints ^ other.constraints)
 
     def __sub__(self, other):
-        return self.__class__(self.conditions - other.conditions)
+        return self.__class__(self.constraints - other.constraints)
 
     def __repr__(self):
-        constraint_expressions = sorted(str(c) for c in self.conditions)
+        constraint_expressions = sorted(str(c) for c in self.constraints)
         return 'Pattern({{{}}})'.format(', '.join(constraint_expressions))
 
     def to(self, func, *args, **kwargs):
-        return self + Condition(partial(func, *args, **kwargs))
+        return self + Constraint(partial(func, *args, **kwargs))
 
     def matches(self, value, fold=all):
-        try:
-            return fold(condition(value) for condition in self.conditions)
-        except Exception:
-            return False
+        return fold(constraint(value) for constraint in self.constraints)
 
     def __contains__(self, value):
         return self.matches(value)
 
     def delegate(self, name, value):
-        # TODO: switch to this, remove .__name__ from Condition.__repr__:
-        # return self + Condition(methodcaller(name, value))
+        # TODO: switch to this, remove .__name__ from Constraint.__repr__:
+        # return self + Constraint(methodcaller(name, value))
 
         getter = attrgetter(name)
 
@@ -169,7 +166,7 @@ class Pattern:
             return getter(self)(*args, **kwargs)
         func.__name__ = name
 
-        return self + Condition(func, value)
+        return self + Constraint(func, value)
 
     for name in comparisons:
         locals()[name] = partialmethod(delegate, name)
