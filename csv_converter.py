@@ -39,8 +39,8 @@ def csv_data(filepath, **conversions):
         # QUOTE_NONE: don't process quote characters, to avoid the value
         # `"2"` becoming the int `2`, rather than the string `'2'`.
         for row in DictReader(f, quoting=csv.QUOTE_NONE):
-            yield {k: parse_value(k, v) for k, v in row.iteritems()}
+            yield {k: parse_value(k, v) for k, v in row.items()}
         # TODO: consider eager or partially-eager approaches to avoid
         # excessive disk calls:
-        # return [{k: parse_value(k, v) for k, v in row.iteritems()}
+        # return [{k: parse_value(k, v) for k, v in row.items()}
         #         for row in DictReader(f, quoting=csv.QUOTE_NONE)]
