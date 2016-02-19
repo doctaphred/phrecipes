@@ -68,17 +68,19 @@ class each:
             return fold(self in container for container in containers)
         return self.to(effect)
 
-    def __getattr__(self, name):
-        """Call this method directly to access overloaded names.
+    def broadcast(self, name):
+        """Call this method to access overloaded names.
 
         >>> each('spam').to
         <bound method each.to of each(['s', 'p', 'a', 'm'])>
-        >>> each('spam').__getattr__('to')
+        >>> each('spam').broadcast('to')
         Traceback (most recent call last):
           ...
         AttributeError: 'str' object has no attribute 'to'
         """
         return self.to(attrgetter(name))
+
+    __getattr__ = broadcast
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
