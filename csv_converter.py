@@ -22,6 +22,7 @@ def csv_data(filepath, **conversions):
     ...          VariousWordsIncludingTrueAndFalse=str,
     ...          NumbersOfVaryingPrecision=float,
     ...          FloatsThatShouldBeRounded=round,
+    ...          BuiltInNames=lambda name: getattr(__builtins__, name),
     ...          **{'Column Header With Spaces': arbitrary_function})
     """
 
