@@ -134,30 +134,6 @@ def _unique_key(iterable, key):
             yield element
 
 
-def record(iterable, history=None):
-    """Record an iterable's output in a list as it is traversed.
-
-    >>> it, history = record(range(5))
-    >>> next(it)
-    0
-    >>> next(it)
-    1
-    >>> history
-    [0, 1]
-    >>> list(it)
-    [2, 3, 4]
-    >>> history
-    [0, 1, 2, 3, 4]
-    """
-    if history is None:
-        history = []
-
-    def recorder():
-        for element in iter(iterable):
-            history.append(element)
-            yield element
-
-    return recorder(), history
 
 
 def remember(gen_func):
