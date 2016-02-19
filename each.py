@@ -48,7 +48,7 @@ class each:
     >>> e['b'] += 1
     Traceback (most recent call last):
       ...
-    NotImplementedError: <class 'itercools.each'> does not support __iadd__
+    NotImplementedError: <class 'each.each'> does not support __iadd__
     """
 
     def __init__(self, iterable, effect=None):
