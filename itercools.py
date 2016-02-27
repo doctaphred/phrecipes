@@ -1,6 +1,9 @@
 """
 See https://docs.python.org/3/library/itertools.html#itertools-recipes
 for more cool recipes!
+
+See also the toolz project for more cool functional programming helpers:
+https://github.com/pytoolz/toolz
 """
 from collections import defaultdict
 from functools import lru_cache, partial, wraps
