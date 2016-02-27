@@ -6,6 +6,7 @@ See also the toolz project for more cool functional programming helpers:
 https://github.com/pytoolz/toolz
 """
 from collections import defaultdict
+from collections.abc import Iterator
 from functools import lru_cache, partial, wraps
 from itertools import tee, filterfalse
 
@@ -159,6 +160,72 @@ def reuse(func=None, *, cache=lru_cache()):
             yield x
 
     return reuser
+
+
+class Peekable(Iterator):
+    """
+    >>> p = Peekable(range(3))
+    >>> next(p)
+    0
+    >>> next(p)
+    1
+    >>> p.peek()
+    2
+    >>> p.peek(default=None)
+    2
+    >>> bool(p)
+    True
+    >>> next(p)
+    2
+    >>> bool(p)
+    False
+    >>> p.peek()
+    Traceback (most recent call last):
+      ...
+    StopIteration
+    >>> p.peek(default=None)
+    >>> next(p)
+    Traceback (most recent call last):
+      ...
+    StopIteration
+    >>> list(Peekable(range(3)))
+    [0, 1, 2]
+    """
+
+    def __init__(self, it):
+        self.__it = iter(it)
+        self.__advance()
+
+    def __advance(self):
+        try:
+            self.__next_val = next(self.__it)
+        except StopIteration:
+            self.__empty = True
+        else:
+            self.__empty = False
+
+    def peek(self, **kwargs):
+        """Return the next item without advancing the iterator.
+
+        Raises StopIteration if the iterator is empty, unless a default
+        value is provided as a kwarg.
+        """
+        if self.__empty:
+            try:
+                return kwargs['default']
+            except KeyError:
+                raise StopIteration
+        return self.__next_val
+
+    def __next__(self):
+        if self.__empty:
+            raise StopIteration
+        val = self.__next_val
+        self.__advance()
+        return val
+
+    def __bool__(self):
+        return not self.__empty
 
 
 if __name__ == '__main__':
