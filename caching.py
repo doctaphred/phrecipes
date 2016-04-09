@@ -11,6 +11,50 @@ def nop(*args, **kwargs):
     pass
 
 
+class Singleton(type):
+    """
+    Copied from the Python Cookbook.
+
+    # Example
+    class Spam(metaclass=Singleton):
+        def __init__(self):
+            print('Creating Spam')
+    """
+    def __init__(self, *args, **kwargs):
+        self.__instance = None
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.__instance is None:
+            self.__instance = super().__call__(*args, **kwargs)
+            return self.__instance
+        else:
+            return self.__instance
+
+
+class Cached(type):
+    """
+    Copied from the Python Cookbook.
+     
+    # Example
+    class Spam(metaclass=Cached):
+        def __init__(self, name):
+            print('Creating Spam({!r})'.format(name))
+            self.name = name
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__cache = weakref.WeakValueDictionary()
+
+    def __call__(self, *args):
+        if args in self.__cache:
+            return self.__cache[args]
+        else:
+            obj = super().__call__(*args)
+            self.__cache[args] = obj
+            return obj
+
+
 def weak_cached(func=None, *, key_func=freeze):
     """Cache the function's return values with weak references.
 
