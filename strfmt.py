@@ -38,6 +38,36 @@ def fmt(s, **kwargs):
     return s.format_map(keys)
 
 
+def argstr(*args, **kwargs):
+    """Return a string representation of the given signature.
+
+    Lists kwargs in sorted order.
+
+    >>> argstr(1, 2, 3)
+    '1, 2, 3'
+    >>> argstr()
+    ''
+    >>> argstr(a=1)
+    'a=1'
+    >>> argstr(1, 2, c=3)
+    '1, 2, c=3'
+    >>> argstr(a=1, c=3, b=2)
+    'a=1, b=2, c=3'
+    """
+    if not args and not kwargs:
+        return ''
+
+    args_str = ', '.join(repr(arg) for arg in args)
+    kwargs_str = ', '.join('{}={!r}'.format(k, v)
+                           for k, v in sorted(kwargs.items()))
+
+    if not args:
+        return kwargs_str
+    if not kwargs:
+        return args_str
+    return '{}, {}'.format(args_str, kwargs_str)
+
+
 def pl(singular, plural, zero=None, placeholder='#'):
     """Return a function that returns an appropriate phrase for a given number.
 
