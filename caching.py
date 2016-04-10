@@ -35,7 +35,7 @@ class Singleton(type):
 class Cached(type):
     """
     Copied from the Python Cookbook.
-     
+
     # Example
     class Spam(metaclass=Cached):
         def __init__(self, name):
