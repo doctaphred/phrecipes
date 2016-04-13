@@ -7,7 +7,7 @@ def fetch(path, name=None):
     path = Path(path)
     if name is None:
         name = path.stem
-    spec = importlib.util.spec_from_file_location(name, path)
+    spec = importlib.util.spec_from_file_location(name, str(path))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
