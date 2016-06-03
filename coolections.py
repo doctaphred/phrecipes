@@ -1,5 +1,8 @@
 class CascadingDict:
     """Please never actually use this.
+    
+    Update: use ChainMap instead:
+    https://docs.python.org/3.5/library/collections.html#collections.ChainMap
 
     >>> d1 = CascadingDict(a=1)
     >>> d2 = d1.extended(a=2)
