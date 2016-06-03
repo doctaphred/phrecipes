@@ -47,7 +47,24 @@ special_method_names = (
     '__reversed__',
     '__contains__',  # `in` casts the return value to bool
 
-    # Numeric types
+    '__neg__',
+    '__pos__',
+    '__abs__',
+    '__invert__',
+
+    # Must return values of the appropriate types
+    '__complex__',
+    '__int__',
+    '__float__',
+    '__round__',
+
+    '__index__',  # Must return an int
+
+    '__enter__',
+    '__exit__',
+    )
+
+binary_method_names = (
     '__add__',
     '__sub__',
     '__mul__',
@@ -77,24 +94,7 @@ special_method_names = (
     '__rand__',
     '__ror__',
     '__rxor__',
-
-    '__neg__',
-    '__pos__',
-    '__abs__',
-    '__invert__',
-
-    # Must return values of the appropriate types
-    '__complex__',
-    '__int__',
-    '__float__',
-    '__round__',
-
-    '__index__',  # Must return an int
-
-    '__enter__',
-    '__exit__',
     )
-
 
 inplace_method_names = (
     '__iadd__',
@@ -114,47 +114,105 @@ inplace_method_names = (
 
 
 class Proxy:
-    """Channel all object access through a proxy object.
+    """Transparently wrap an object with another object.
 
-    >>> x = Proxy({'a': 1})
-    >>> type(x)
-    <class 'proxy.Proxy'>
-    >>> x.__class__
-    <class 'dict'>
-    >>> x.__doc__[:4]
-    'dict'
+    --------------------------------------------------------------------
+
+    Proxies behave just like the objects they wrap:
+
+    >>> x = Proxy({})
+
+    >>> x
+    {}
+
+    >>> x['a'] = 1
     >>> x
     {'a': 1}
-    >>> x == 2
-    False
-    >>> 2 == x
-    False
-    >>> str(x)
-    "{'a': 1}"
+
     >>> x.__str__()
     "{'a': 1}"
+
+    >>> str(x)
+    "{'a': 1}"
+
     >>> x['a'] = 2
     >>> x
     {'a': 2}
-    >>> del x['a']
-    >>> x['b'] = 3
-    >>> x
+
+    >>> del x['a']; x['b'] = 3; x
     {'b': 3}
-    >>> x.test = 2
+
+    --------------------------------------------------------------------
+
+    Only the `type` function gives the Proxy away:
+
+    >>> Proxy({}).__class__
+    <class 'dict'>
+
+    >>> x.__doc__[:4]
+    'dict'
+
+    >>> type(Proxy({}))
+    <class 'proxy.Proxy'>
+
+    --------------------------------------------------------------------
+
+    Attribute assignment occurs on the wrapped object:
+
+    >>> f = lambda: None
+    >>> g = f
+    >>> g.attr = 2
+    >>> g.attr
+    2
+    >>> f.attr
+    2
+
+    >>> f = lambda: None
+    >>> p = Proxy(f)
+    >>> p.attr = 2
+    >>> p.attr
+    2
+    >>> f.attr
+    2
+    >>> f == p
+    True
+
+    >>> {}.attr = 2
     Traceback (most recent call last):
       ...
-    AttributeError: 'dict' object has no attribute 'test'
-    >>> x.delegate
+    AttributeError: 'dict' object has no attribute 'attr'
+
+    >>> Proxy({}).attr = 2
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'dict' object has no attribute 'attr'
+
+    --------------------------------------------------------------------
+
+    The Proxy class' own attributes are not directly accessible:
+
+    >>> Proxy({}).delegate
     Traceback (most recent call last):
       ...
     AttributeError: 'dict' object has no attribute 'delegate'
 
-    TODO: fix these:
-    >>> p = Proxy(1)
-    >>> p + p
+    >>> Proxy({}).inplace_delegate
     Traceback (most recent call last):
       ...
-    TypeError: unsupported operand type(s) for +: 'Proxy' and 'Proxy'
+    AttributeError: 'dict' object has no attribute 'inplace_delegate'
+
+    >>> type(Proxy({})).delegate  # doctest: +ELLIPSIS
+    <function Proxy.delegate at ...>
+
+    >>> object.__getattribute__(Proxy({}), 'delegate')
+    <bound method Proxy.delegate of {}>
+
+    >>> object.__getattribute__(Proxy({}), 'ayyy_lmao')
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'Proxy' object has no attribute 'ayyy_lmao'
+
+    --------------------------------------------------------------------
 
     If the wrapped object does not define an in-place operation (e.g.,
     immutable types like int and str), the proxy substitutes the
@@ -167,6 +225,7 @@ class Proxy:
     <class 'int'>
     >>> p
     1
+
     >>> p += 1
     >>> type(p)
     <class 'proxy.Proxy'>
@@ -175,7 +234,7 @@ class Proxy:
     >>> p
     2
 
-    >>> p = Proxy(set([1]))
+    >>> p = Proxy({1})
     >>> type(p)
     <class 'proxy.Proxy'>
     >>> p -= {1}
@@ -186,48 +245,88 @@ class Proxy:
     >>> p
     set()
 
-    TODO: make the following two tests instead raise:
+    --------------------------------------------------------------------
+
+    Some exception messages may be altered, but the exception types
+    remain the same:
+
+    >>> set() + set()
+    Traceback (most recent call last):
+      ...
+    TypeError: unsupported operand type(s) for +: 'set' and 'set'
+
+    >>> Proxy(set()) + set()
+    Traceback (most recent call last):
+      ...
+    TypeError: unsupported operand type(s) for +: 'Proxy' and 'set'
+
+    >>> set() + Proxy(set)
+    Traceback (most recent call last):
+      ...
+    TypeError: unsupported operand type(s) for +: 'set' and 'Proxy'
+
+    >>> s = set()
+    >>> s += set()
+    Traceback (most recent call last):
+      ...
     TypeError: unsupported operand type(s) for +=: 'set' and 'set'
 
-    >>> p += set([2])
+    >>> s += Proxy(set)
     Traceback (most recent call last):
       ...
-    AttributeError: 'set' object has no attribute '__add__'
-    >>> p + set([2])
+    TypeError: unsupported operand type(s) for +=: 'set' and 'Proxy'
+
+    >>> p = Proxy(set())
+    >>> p += set()
     Traceback (most recent call last):
       ...
-    AttributeError: 'set' object has no attribute '__add__'
+    TypeError: unsupported operand type(s) for +=: 'Proxy' and 'set'
 
-    # TODO:
-    # Special methods in proxied objects are looked up in the usual way,
-    # via getattr(type(obj), name):
+    >>> p += Proxy(set)
+    Traceback (most recent call last):
+      ...
+    TypeError: unsupported operand type(s) for +=: 'Proxy' and 'Proxy'
 
-    # >>> class C:
-    # ...     pass
-    # ...
-    # >>> c = C()
-    # >>> c.__len__ = lambda: 5
-    # >>> len(c)
-    # Traceback (most recent call last):
-    #   ...
-    # TypeError: object of type 'C' has no len()
-    # >>> p = Proxy(c)
-    # >>> len(p)
-    # Traceback (most recent call last):
-    #   ...
-    # TypeError: object of type 'C' has no len()
+    --------------------------------------------------------------------
+
+    Special methods are looked up via `getattr(obj.__class__, name)`,
+    matching the behavior of the interpreter:
+
+    >>> class C: pass
+    >>> c = C()
+    >>> c.__len__ = lambda: 5
+    >>> c.__len__  # doctest: +ELLIPSIS
+    <function <lambda> at ...>
+    >>> len(c)
+    Traceback (most recent call last):
+      ...
+    TypeError: object of type 'C' has no len()
+
+    >>> p = Proxy(c)
+    >>> p.__len__  # doctest: +ELLIPSIS
+    <function <lambda> at ...>
+    >>> len(p)
+    Traceback (most recent call last):
+      ...
+    TypeError: type object 'C' has no attribute '__len__'
+
+    >>> f = lambda: None
+    >>> f.__eq__ = lambda self, other: True
+    >>> f == 2
+    False
     """
 
     def __init__(self, obj):
-        super().__setattr__('__wrapped__', obj)
+        super().__setattr__('wrapped_obj', obj)
 
     def __getattribute__(self, name):
-        wrapped = super().__getattribute__('__wrapped__')
-        wrapper = super().__getattribute__('wrapper')
-        return wrapper(wrapped, name)
+        wrapped_obj = super().__getattribute__('wrapped_obj')
+        getattr_wrapper = super().__getattribute__('getattr_wrapper')
+        return getattr_wrapper(wrapped_obj, name)
 
-    def wrapper(self, wrapped, name):
-        return getattr(wrapped, name)
+    def getattr_wrapper(self, wrapped_obj, name):
+        """Override this method in subclasses to alter the proxy's behavior."""
+        return getattr(wrapped_obj, name)
 
     # Certain implicit invocations of special methods may bypass
     # __getattribute__: for example, `len(Proxy([]))` invokes
@@ -238,8 +337,15 @@ class Proxy:
     # Proxy.__getattribute__ from within.
 
     def delegate(self, name, *args, **kwargs):
-        # I literally have no idea how this works anymore.
-        return getattr(self, name)(*args, **kwargs)
+        """Delegate the named special method to the wrapped object."""
+        wrapped_obj = super().__getattribute__('wrapped_obj')
+        getattr_wrapper = super().__getattribute__('getattr_wrapper')
+        try:
+            wrapped_method = getattr_wrapper(wrapped_obj.__class__, name)
+        except AttributeError as e:
+            raise TypeError(e)
+        else:
+            return wrapped_method(wrapped_obj, *args, **kwargs)
 
     for name in special_method_names:
         locals()[name] = partialmethod(delegate, name)
@@ -247,8 +353,23 @@ class Proxy:
         # (NameError if done outside an empty loop)
         del name
 
+    def binary_delegate(self, name, *args, **kwargs):
+        """Delegate the named binary method, or return NotImplemented."""
+        wrapped_obj = super().__getattribute__('wrapped_obj')
+        getattr_wrapper = super().__getattribute__('getattr_wrapper')
+        try:
+            binary_method = getattr_wrapper(wrapped_obj.__class__, name)
+        except AttributeError:
+            return NotImplemented
+        else:
+            return binary_method(wrapped_obj, *args, **kwargs)
+
+    for name in binary_method_names:
+        locals()[name] = partialmethod(binary_delegate, name)
+        del name
+
     def inplace_delegate(self, name, *args, **kwargs):
-        """Delegate the named in-place method to the wrapped object.
+        """Delegate the named in-place method, or return NotImplemented.
 
         If the wrapped object does not define an in-place version of the
         method, fall back to the regular version and return a new Proxy
@@ -274,21 +395,42 @@ class Proxy:
         1
         >>> p is q
         False
+
+        TODO:
+
+        # >>> f = lambda: None
+        # >>> f.__iadd__ = lambda self, value: self.__setattr__(value)
+        # >>> f += 1
+        # TypeError: unsupported operand type(s) for +=: 'function' and 'int'
+
+        # >>> p = Proxy(lambda: None)
+        # >>> p.__iadd__ = lambda self: self.__setattr__(self)
+        # >>> p += 1
+        # TypeError: unsupported operand type(s) for +=: 'function' and 'int'
+
         """
+        wrapped_obj = super().__getattribute__('wrapped_obj')
+        getattr_wrapper = super().__getattribute__('getattr_wrapper')
         try:
-            attr = getattr(self, name)
+            inplace_method = getattr_wrapper(wrapped_obj, name)
         except AttributeError:
             # If the in-place version was not found, fall back to the
             # regular version and return a new Proxy object.
-            attr = getattr(self, name.replace('i', '', 1))  # ZOMG HAX
-            new_obj = attr(*args, **kwargs)
-            return type(self)(new_obj)
+            try:
+                method = getattr_wrapper(wrapped_obj, name.replace('i', '', 1))  # ZOMG HAX
+            except AttributeError:
+                # If the regular version was not found, return
+                # NotImplemented and let the interpreter sort it out.
+                return NotImplemented
+            else:
+                new_obj = method(*args, **kwargs)
+                return type(self)(new_obj)
         else:
             # Otherwise, update this Proxy object's wrapped value.
             # (Most objects will probably just return `self` from the
             # in-place operation, but that is not a guarantee.)
-            new_obj = attr(*args, **kwargs)
-            super().__setattr__('__wrapped__', new_obj)
+            new_obj = inplace_method(*args, **kwargs)
+            super().__setattr__('wrapped_obj', new_obj)
             return self
 
     for name in inplace_method_names:
@@ -299,77 +441,79 @@ class Proxy:
 class PrintingProxy(Proxy):
     """Test and demonstration class.
 
+    --------------------------------------------------------------------
+
     >>> x = PrintingProxy({'a': 1})
+
     >>> type(x)
     <class 'proxy.PrintingProxy'>
+
     >>> x.__class__
-    looking for __class__
+    looking for __class__ on {'a': 1}
     <class 'dict'>
+
     >>> x.__doc__[:4]
-    looking for __doc__
+    looking for __doc__ on {'a': 1}
     'dict'
+
     >>> x
-    looking for __repr__
+    looking for __repr__ on <class 'dict'>
     {'a': 1}
     >>> x == 2
-    looking for __eq__
+    looking for __eq__ on <class 'dict'>
     False
     >>> 2 == x
-    looking for __eq__
+    looking for __eq__ on <class 'dict'>
     False
-    >>> x.__str__()
-    looking for __str__
-    "{'a': 1}"
+
     >>> str(x)
-    looking for __str__
+    looking for __str__ on <class 'dict'>
     "{'a': 1}"
+
+    >>> x.__str__()
+    looking for __str__ on {'a': 1}
+    "{'a': 1}"
+
+    --------------------------------------------------------------------
+
     >>> x['a'] = 2
-    looking for __setitem__
+    looking for __setitem__ on <class 'dict'>
     >>> x
-    looking for __repr__
+    looking for __repr__ on <class 'dict'>
     {'a': 2}
     >>> del x['a']
-    looking for __delitem__
+    looking for __delitem__ on <class 'dict'>
     >>> x['b'] = 3
-    looking for __setitem__
+    looking for __setitem__ on <class 'dict'>
     >>> x
-    looking for __repr__
+    looking for __repr__ on <class 'dict'>
     {'b': 3}
-    >>> x.test = 2
-    Traceback (most recent call last):
-      ...
-    AttributeError: 'dict' object has no attribute 'test'
-    >>> x.delegate
-    Traceback (most recent call last):
-      ...
-    AttributeError: 'dict' object has no attribute 'delegate'
-
 
     >>> len(PrintingProxy([]))
-    looking for __len__
+    looking for __len__ on <class 'list'>
     0
 
     >>> p1 = PrintingProxy(1)
     >>> p1
-    looking for __repr__
+    looking for __repr__ on <class 'int'>
     1
     >>> p1 + 1
-    looking for __add__
+    looking for __add__ on <class 'int'>
     2
     >>> 1 + p1
-    looking for __radd__
+    looking for __radd__ on <class 'int'>
     2
     >>> sum([p1, 1])
-    looking for __radd__
+    looking for __radd__ on <class 'int'>
     2
     >>> sum([1, p1])
-    looking for __radd__
+    looking for __radd__ on <class 'int'>
     2
     """
 
-    def wrapper(self, wrapped, name):
-        print('looking for', name)
-        return getattr(wrapped, name)
+    def getattr_wrapper(self, wrapped_obj, name):
+        print('looking for', name, 'on', wrapped_obj)
+        return getattr(wrapped_obj, name)
 
 
 class CallbackProxy:
@@ -391,8 +535,8 @@ class CallbackProxy:
         super().__setattr__('callback', callback)
 
     def __getattribute__(self, name):
-        obj = super().__getattribute__('callback')()
-        return getattr(obj, name)
+        callback_result = super().__getattribute__('callback')()
+        return getattr(callback_result, name)
 
     # Certain implicit invocations of special methods may bypass
     # __getattribute__: for example, `len(Proxy([]))` invokes
