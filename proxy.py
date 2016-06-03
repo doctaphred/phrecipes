@@ -116,8 +116,6 @@ inplace_method_names = (
 class Proxy:
     """Channel all object access through a proxy object.
 
-    Forgive me, Guido, for I have sinned.
-
     >>> x = Proxy({'a': 1})
     >>> type(x)
     <class 'proxy.Proxy'>
