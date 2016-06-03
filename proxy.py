@@ -248,15 +248,48 @@ class Proxy:
         del name
 
     def inplace_delegate(self, name, *args, **kwargs):
+        """Delegate the named in-place method to the wrapped object.
+
+        If the wrapped object does not define an in-place version of the
+        method, fall back to the regular version and return a new Proxy
+        object wrapping the result, mimicking the behavior of ints and
+        other immutable objects.
+
+        >>> p = Proxy([])
+        >>> q = p
+        >>> p += [1]
+        >>> p
+        [1]
+        >>> q
+        [1]
+        >>> p is q
+        True
+
+        >>> p = Proxy(1)
+        >>> q = p
+        >>> p += 1
+        >>> p
+        2
+        >>> q
+        1
+        >>> p is q
+        False
+        """
         try:
             attr = getattr(self, name)
         except AttributeError:
             # If the in-place version was not found, fall back to the
-            # regular version
+            # regular version and return a new Proxy object.
             attr = getattr(self, name.replace('i', '', 1))  # ZOMG HAX
-        new_obj = attr(*args, **kwargs)
-        super().__setattr__('__wrapped__', new_obj)
-        return self
+            new_obj = attr(*args, **kwargs)
+            return type(self)(new_obj)
+        else:
+            # Otherwise, update this Proxy object's wrapped value.
+            # (Most objects will probably just return `self` from the
+            # in-place operation, but that is not a guarantee.)
+            new_obj = attr(*args, **kwargs)
+            super().__setattr__('__wrapped__', new_obj)
+            return self
 
     for name in inplace_method_names:
         locals()[name] = partialmethod(inplace_delegate, name)
