@@ -191,21 +191,21 @@ class Proxy:
 
     The Proxy class' own attributes are not directly accessible:
 
-    >>> Proxy({}).delegate
+    >>> Proxy({}).delegate_special
     Traceback (most recent call last):
       ...
-    AttributeError: 'dict' object has no attribute 'delegate'
+    AttributeError: 'dict' object has no attribute 'delegate_special'
 
     >>> Proxy({}).inplace_delegate
     Traceback (most recent call last):
       ...
     AttributeError: 'dict' object has no attribute 'inplace_delegate'
 
-    >>> type(Proxy({})).delegate  # doctest: +ELLIPSIS
-    <function Proxy.delegate at ...>
+    >>> type(Proxy({})).delegate_special  # doctest: +ELLIPSIS
+    <function Proxy.delegate_special at ...>
 
-    >>> object.__getattribute__(Proxy({}), 'delegate')
-    <bound method Proxy.delegate of {}>
+    >>> object.__getattribute__(Proxy({}), 'delegate_special')
+    <bound method Proxy.delegate_special of {}>
 
     >>> object.__getattribute__(Proxy({}), 'ayyy_lmao')
     Traceback (most recent call last):
@@ -336,7 +336,7 @@ class Proxy:
     # defining each special method on the Proxy class and invoking
     # Proxy.__getattribute__ from within.
 
-    def delegate(self, name, *args, **kwargs):
+    def delegate_special(self, name, *args, **kwargs):
         """Delegate the named special method to the wrapped object."""
         wrapped_obj = super().__getattribute__('wrapped_obj')
         getattr_wrapper = super().__getattribute__('getattr_wrapper')
@@ -348,12 +348,12 @@ class Proxy:
             return wrapped_method(wrapped_obj, *args, **kwargs)
 
     for name in special_method_names:
-        locals()[name] = partialmethod(delegate, name)
+        locals()[name] = partialmethod(delegate_special, name)
         # Clean up temporary variable
         # (NameError if done outside an empty loop)
         del name
 
-    def binary_delegate(self, name, *args, **kwargs):
+    def delegate_binary(self, name, *args, **kwargs):
         """Delegate the named binary method, or return NotImplemented."""
         wrapped_obj = super().__getattribute__('wrapped_obj')
         getattr_wrapper = super().__getattribute__('getattr_wrapper')
@@ -365,10 +365,10 @@ class Proxy:
             return binary_method(wrapped_obj, *args, **kwargs)
 
     for name in binary_method_names:
-        locals()[name] = partialmethod(binary_delegate, name)
+        locals()[name] = partialmethod(delegate_binary, name)
         del name
 
-    def inplace_delegate(self, name, *args, **kwargs):
+    def delegate_inplace(self, name, *args, **kwargs):
         """Delegate the named in-place method, or return NotImplemented.
 
         If the wrapped object does not define an in-place version of the
@@ -434,7 +434,7 @@ class Proxy:
             return self
 
     for name in inplace_method_names:
-        locals()[name] = partialmethod(inplace_delegate, name)
+        locals()[name] = partialmethod(delegate_inplace, name)
         del name
 
 
