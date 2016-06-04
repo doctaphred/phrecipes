@@ -358,11 +358,11 @@ class Proxy:
         wrapped_obj = super().__getattribute__('wrapped_obj')
         getattr_wrapper = super().__getattribute__('getattr_wrapper')
         try:
-            binary_method = getattr_wrapper(wrapped_obj.__class__, name)
+            wrapped_method = getattr_wrapper(wrapped_obj.__class__, name)
         except AttributeError:
             return NotImplemented
         else:
-            return binary_method(wrapped_obj, *args, **kwargs)
+            return wrapped_method(wrapped_obj, *args, **kwargs)
 
     for name in binary_method_names:
         locals()[name] = partialmethod(delegate_binary, name)
@@ -396,40 +396,44 @@ class Proxy:
         >>> p is q
         False
 
-        TODO:
+        >>> f = lambda: None
+        >>> f.__iadd__ = lambda value: print('inplace-adding', value)
+        >>> f += 1
+        Traceback (most recent call last):
+          ...
+        TypeError: unsupported operand type(s) for +=: 'function' and 'int'
 
-        # >>> f = lambda: None
-        # >>> f.__iadd__ = lambda self, value: self.__setattr__(value)
-        # >>> f += 1
-        # TypeError: unsupported operand type(s) for +=: 'function' and 'int'
-
-        # >>> p = Proxy(lambda: None)
-        # >>> p.__iadd__ = lambda self: self.__setattr__(self)
-        # >>> p += 1
-        # TypeError: unsupported operand type(s) for +=: 'function' and 'int'
+        >>> p = Proxy(lambda: None)
+        >>> p.__iadd__ = lambda value: print('inplace-adding', value)
+        >>> p += 1
+        Traceback (most recent call last):
+          ...
+        TypeError: unsupported operand type(s) for +=: 'Proxy' and 'int'
 
         """
         wrapped_obj = super().__getattribute__('wrapped_obj')
         getattr_wrapper = super().__getattribute__('getattr_wrapper')
         try:
-            inplace_method = getattr_wrapper(wrapped_obj, name)
+            wrapped_method = getattr_wrapper(wrapped_obj.__class__, name)
         except AttributeError:
             # If the in-place version was not found, fall back to the
             # regular version and return a new Proxy object.
             try:
-                method = getattr_wrapper(wrapped_obj, name.replace('i', '', 1))  # ZOMG HAX
+                fallback_name = name.replace('i', '', 1)  # ZOMG HAX
+                wrapped_fallback_method = getattr_wrapper(
+                    wrapped_obj.__class__, fallback_name)
             except AttributeError:
                 # If the regular version was not found, return
                 # NotImplemented and let the interpreter sort it out.
                 return NotImplemented
             else:
-                new_obj = method(*args, **kwargs)
+                new_obj = wrapped_fallback_method(wrapped_obj, *args, **kwargs)
                 return type(self)(new_obj)
         else:
             # Otherwise, update this Proxy object's wrapped value.
             # (Most objects will probably just return `self` from the
             # in-place operation, but that is not a guarantee.)
-            new_obj = inplace_method(*args, **kwargs)
+            new_obj = wrapped_method(wrapped_obj, *args, **kwargs)
             super().__setattr__('wrapped_obj', new_obj)
             return self
 
