@@ -337,7 +337,32 @@ class Proxy:
     # Proxy.__getattribute__ from within.
 
     def delegate_special(self, name, *args, **kwargs):
-        """Delegate the named special method to the wrapped object."""
+        """Delegate the named special method to the wrapped object.
+
+        ----------------------------------------------------------------
+
+        Binary special methods are looked up on the class of the object,
+        rather than the object itself:
+
+        >>> f = lambda: None
+        >>> f.__len__ = lambda: print('calling __len__')
+        >>> f.__len__()
+        calling __len__
+        >>> len(f)
+        Traceback (most recent call last):
+          ...
+        TypeError: object of type 'function' has no len()
+
+        >>> p = Proxy(lambda: None)
+        >>> p.__len__ = lambda: print('calling __len__')
+        >>> p.__len__()
+        calling __len__
+        >>> len(p)
+        Traceback (most recent call last):
+          ...
+        TypeError: type object 'function' has no attribute '__len__'
+
+        """
         wrapped_obj = super().__getattribute__('wrapped_obj')
         getattr_wrapper = super().__getattribute__('getattr_wrapper')
         try:
@@ -354,7 +379,37 @@ class Proxy:
         del name
 
     def delegate_binary(self, name, *args, **kwargs):
-        """Delegate the named binary method, or return NotImplemented."""
+        """Delegate the named binary method, or return NotImplemented.
+
+        >>> p = Proxy([1])
+        >>> Proxy.delegate_binary(p, '__add__', [2])
+        [1, 2]
+        >>> Proxy.delegate_binary(p, '__sub__', [2])
+        NotImplemented
+
+        ----------------------------------------------------------------
+
+        Binary special methods are looked up on the class of the object,
+        rather than the object itself:
+
+        >>> f = lambda: None
+        >>> f.__add__ = lambda value: print('adding', value)
+        >>> f.__add__(1)
+        adding 1
+        >>> f + 1
+        Traceback (most recent call last):
+          ...
+        TypeError: unsupported operand type(s) for +: 'function' and 'int'
+
+        >>> p = Proxy(lambda: None)
+        >>> p.__add__ = lambda value: print('adding', value)
+        >>> p.__add__(1)
+        adding 1
+        >>> p + 1
+        Traceback (most recent call last):
+          ...
+        TypeError: unsupported operand type(s) for +: 'Proxy' and 'int'
+        """
         wrapped_obj = super().__getattribute__('wrapped_obj')
         getattr_wrapper = super().__getattribute__('getattr_wrapper')
         try:
@@ -396,8 +451,15 @@ class Proxy:
         >>> p is q
         False
 
+        ----------------------------------------------------------------
+
+        In-place special methods are looked up on the class of the
+        object, rather than the object itself:
+
         >>> f = lambda: None
         >>> f.__iadd__ = lambda value: print('inplace-adding', value)
+        >>> f.__iadd__(1)
+        inplace-adding 1
         >>> f += 1
         Traceback (most recent call last):
           ...
@@ -405,10 +467,41 @@ class Proxy:
 
         >>> p = Proxy(lambda: None)
         >>> p.__iadd__ = lambda value: print('inplace-adding', value)
+        >>> p.__iadd__(1)
+        inplace-adding 1
         >>> p += 1
         Traceback (most recent call last):
           ...
         TypeError: unsupported operand type(s) for +=: 'Proxy' and 'int'
+
+        ----------------------------------------------------------------
+
+        Note that the in-place methods may return a value, even though
+        they may not be used as an expression unless invoked directly:
+
+        >>> x = [1].__iadd__([2])
+        >>> x
+        [1, 2]
+        >>> x = ([1] += [2])
+        Traceback (most recent call last):
+          ...
+            x = ([1] += [2])
+                      ^
+        SyntaxError: invalid syntax
+
+
+        >>> p = Proxy([1])
+        >>> x = Proxy.delegate_inplace(p, '__iadd__', [2])
+        >>> x
+        [1, 2]
+        >>> p
+        [1, 2]
+        >>> x = (p += [2])
+        Traceback (most recent call last):
+          ...
+            x = (p += [2])
+                    ^
+        SyntaxError: invalid syntax
 
         """
         wrapped_obj = super().__getattribute__('wrapped_obj')
