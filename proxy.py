@@ -295,16 +295,16 @@ class Proxy:
     >>> class C: pass
     >>> c = C()
     >>> c.__len__ = lambda: 5
-    >>> c.__len__  # doctest: +ELLIPSIS
-    <function <lambda> at ...>
+    >>> c.__len__()
+    5
     >>> len(c)
     Traceback (most recent call last):
       ...
     TypeError: object of type 'C' has no len()
 
     >>> p = Proxy(c)
-    >>> p.__len__  # doctest: +ELLIPSIS
-    <function <lambda> at ...>
+    >>> p.__len__()
+    5
     >>> len(p)
     Traceback (most recent call last):
       ...
