@@ -196,10 +196,10 @@ class Proxy:
       ...
     AttributeError: 'dict' object has no attribute 'delegate_special'
 
-    >>> Proxy({}).inplace_delegate
+    >>> Proxy({}).delegate_inplace
     Traceback (most recent call last):
       ...
-    AttributeError: 'dict' object has no attribute 'inplace_delegate'
+    AttributeError: 'dict' object has no attribute 'delegate_inplace'
 
     >>> type(Proxy({})).delegate_special  # doctest: +ELLIPSIS
     <function Proxy.delegate_special at ...>
