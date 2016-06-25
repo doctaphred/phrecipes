@@ -105,36 +105,25 @@ def defaultdivvy(iterable, predicate):
 
 
 def unique(iterable, key=None):
-    """Yield unique elements, preserving order."""
+    """Yield unique elements, preserving order.
+
+    >>> ''.join(unique('AAAABBBCCDAABBB'))
+    'ABCD'
+    >>> ''.join(unique('ABBCcAD', key=str.casefold))
+    'ABCD'
+    """
+    seen = set()
+    see = seen.add  # Avoid inner-loop name lookup
     if key is None:
-        return _unique(iterable)
-    return _unique_key(iterable, key)
-
-
-def _unique(iterable):
-    """
-    >>> ''.join(_unique('AAAABBBCCDAABBB'))
-    'ABCD'
-    """
-    seen = set()
-    see = seen.add  # Avoid inner-loop name lookup
-    for element in filterfalse(seen.__contains__, iterable):
-        see(element)
-        yield element
-
-
-def _unique_key(iterable, key):
-    """
-    >>> ''.join(_unique_key('ABBCcAD', key=str.casefold))
-    'ABCD'
-    """
-    seen = set()
-    see = seen.add  # Avoid inner-loop name lookup
-    for element in iterable:
-        k = key(element)
-        if k not in seen:
-            see(k)
+        for element in filterfalse(seen.__contains__, iterable):
+            see(element)
             yield element
+    else:
+        for element in iterable:
+            k = key(element)
+            if k not in seen:
+                see(k)
+                yield element
 
 
 def reuse(func=None, *, cache=lru_cache()):
