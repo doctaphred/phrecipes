@@ -62,32 +62,27 @@ class FreshFile:
     See watch.
     """
 
-    def __init__(self, path, interval=0.5):
+    def __init__(self, path, interval=0.5, lazy=False):
         self.path = path
         self._lock = Lock()
-        self.refresh()
-        watch(lambda _: self.unfreshen(), path, interval=interval)
-
-    @property
-    def fresh(self):
-        return self._fresh
-
-    def refresh(self):
-        """Re-read file from disk."""
-        with self._lock:
-            with open(self.path) as f:
+        if lazy:
+            self._contents = None
+        else:
+            with open(path) as f:
                 self._contents = f.read()
-            self._fresh = True
+        watch(lambda _: self._reset(), path, interval=interval)
 
-    def unfreshen(self):
+    def _reset(self):
         with self._lock:
-            self._fresh = False
+            self._contents = None
 
     def read(self):
         """Return the current contents of the file."""
-        if not self._fresh:
-            self.refresh()
-        return self._contents
+        with self._lock:
+            if self._contents is None:
+                with open(self.path) as f:
+                    self._contents = f.read()
+            return self._contents
 
 
 if __name__ == '__main__':
