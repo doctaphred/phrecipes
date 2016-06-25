@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import sys
 from pathlib import Path
@@ -18,9 +19,11 @@ def fetch(path, name=None):
     return module
 
 
-def import_from_url(url, name=None):
+def import_from_url(url, checksum, name=None, algorithm='sha256'):
     """lol dont do this"""
     code = requests.get(url).text
+    if checksum != hashlib.new(algorithm, code).hexdigest():
+        raise ValueError('checksum mismatch for {}'.format(url))
     if name is None:
         name = Path(urlparse(url).path).stem
     sys.modules[name] = module = ModuleType(name)
