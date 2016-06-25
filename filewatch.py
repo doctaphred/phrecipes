@@ -62,14 +62,12 @@ class FreshFile:
     See watch.
     """
 
-    def __init__(self, path, interval=0.5, lazy=False):
+    def __init__(self, path, interval=0.5, lazy=True):
         self.path = path
         self._lock = Lock()
-        if lazy:
-            self._contents = None
-        else:
-            with open(path) as f:
-                self._contents = f.read()
+        self._contents = None
+        if not lazy:
+            self.read()
         watch(lambda _: self._reset(), path, interval=interval)
 
     def _reset(self):
