@@ -1,5 +1,7 @@
 import sys
 
+from coolections import subdict
+
 
 class SafeSub(dict):
     """Use with str.format_map to leave missing keys untouched.
@@ -36,6 +38,53 @@ def fmt(s, **kwargs):
     keys = SafeSub(sys._getframe(1).f_locals)
     keys.update(kwargs)
     return s.format_map(keys)
+
+
+def vars_repr(obj, var_names=None, var_filter=None):
+    """Return a repr string from the specified instance attributes.
+
+    If no names are specified, uses all vars.
+
+    >>> class Thing:
+    ...     not_a_var = 'vars are instance attrs; this is a class attr'
+    ...     def __init__(self, **kwargs):
+    ...         self.__dict__.update(kwargs)
+    ...     __repr__ = vars_repr
+
+    >>> Thing(a=1, b=2)
+    Thing(a=1, b=2)
+
+    >>> vars_repr(Thing(a=1, b=2), ['a', 'bogus'])
+    'Thing(a=1)'
+    """
+    repr_vars = subdict(vars(obj), keys=var_names, item_filter=var_filter)
+    return '{}({})'.format(obj.__class__.__name__, argstr(**repr_vars))
+
+
+def attr_repr(obj, attr_names=None):
+    """Return a repr string from the specified attributes.
+
+    If no attributes are specified, uses all "public" attributes
+    (names that don't begin with an underscore).
+
+    >>> class Thing:
+    ...     a = 1
+    ...     def __init__(self):
+    ...         self.b = 2
+    ...     @property
+    ...     def c(self):
+    ...         return 3
+    ...     def method(self):
+    ...         return 4
+    ...     __repr__ = attr_repr
+
+    >>> Thing()
+    Thing(a=1, b=2, c=3)
+    """
+    if attr_names is None:
+        attr_names = [name for name in dir(obj) if not name.startswith('_')]
+    attrs = {name: getattr(obj, name) for name in attr_names}
+    return '{}({})'.format(obj.__class__.__name__, argstr(**attrs))
 
 
 def argstr(*args, **kwargs):
