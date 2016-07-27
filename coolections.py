@@ -1,3 +1,66 @@
+def value_not_none(k, v):
+    return v is not None
+
+
+def subdict(d, keys=None, item_filter=value_not_none):
+    """Construct a "subset" of a dictionary.
+
+    First filters keys based on the `keys` whitelist, then filters items
+    based on the `item_filter` function. If either filter is None, it
+    will not be applied.
+
+    With no arguments, simply filters out None values:
+
+        >>> subdict({'a': 1})
+        {'a': 1}
+        >>> subdict({'a': 1, 'b': None})
+        {'a': 1}
+
+    With `keys`, filters out non-matching keys:
+
+        >>> subdict({'a': 1, 'b': 2}, ['a'])
+        {'a': 1}
+
+        >>> subdict({'a': 1, 'b': 2, 'c': None}, ['a', 'c'])
+        {'a': 1}
+
+    The default `item_filter` may be altered or removed:
+
+        >>> def val_gt_1(key, value):
+        ...     return value > 1
+
+        >>> subdict({'a': 1, 'b': 2}, item_filter=val_gt_1)
+        {'b': 2}
+
+        >>> subdict({'a': None}, item_filter=None)
+        {'a': None}
+
+    Both `keys` and `item_filter` may be provided:
+
+        >>> subdict({'a': 1, 'b': 2, 'c': 3}, ['a', 'b'], item_filter=val_gt_1)
+        {'b': 2}
+
+    Args:
+        d: a dictionary
+        keys: a subset of the dictionary's keys, or None to use all keys
+        item_filter: function(key, value) -> bool, or None to use all items
+    """
+    if keys is None:
+        filtered_keys = d
+    else:
+        filtered_keys = d.keys() & keys  # Python 2: set(d).intersection(keys)
+
+    if item_filter is None:
+        return {k: d[k] for k in filtered_keys}
+    else:
+        subdict = {}
+        for k in filtered_keys:
+            v = d[k]
+            if item_filter(k, v):
+                subdict[k] = v
+        return subdict
+
+
 class CascadingDict:
     """Please never actually use this.
     
