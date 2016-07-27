@@ -76,7 +76,8 @@ def attr_repr(obj, attr_names=None):
     ...         return 3
     ...     def method(self):
     ...         return 4
-    ...     __repr__ = attr_repr
+    ...     def __repr__(self):
+    ...         return attr_repr(self, ['a', 'b', 'c'])
 
     >>> Thing()
     Thing(a=1, b=2, c=3)

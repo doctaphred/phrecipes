@@ -18,12 +18,12 @@ def csv_data(filepath, **conversions):
 
     Example usage:
 
-    >>> csv_data(filepath,
-    ...          VariousWordsIncludingTrueAndFalse=str,
-    ...          NumbersOfVaryingPrecision=float,
-    ...          FloatsThatShouldBeRounded=round,
-    ...          BuiltInNames=lambda name: getattr(__builtins__, name),
-    ...          **{'Column Header With Spaces': arbitrary_function})
+        csv_data(filepath,
+                 VariousWordsIncludingTrueAndFalse=str,
+                 NumbersOfVaryingPrecision=float,
+                 FloatsThatShouldBeRounded=round,
+                 BuiltInNames=lambda name: getattr(__builtins__, name),
+                 **{'Column Header With Spaces': arbitrary_function})
     """
 
     def convert(key, value):
