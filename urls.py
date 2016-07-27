@@ -1,6 +1,5 @@
 from collections import namedtuple
-from urllib import urlencode
-from urlparse import ParseResult, urlparse, urlunparse
+from urllib.parse import ParseResult, urlencode, urlparse, urlunparse
 
 
 def url(scheme='', netloc='', path='', params='', query=(), fragment=''):
