@@ -1,4 +1,3 @@
-from collections import namedtuple
 from urllib.parse import ParseResult, urlencode, urlparse, urlunparse
 
 
@@ -15,7 +14,8 @@ def url(scheme='', netloc='', path='', params='', query=(), fragment=''):
         query: May be a dict or a sequence of 2-tuples.
         fragment: Position on page; usually used only by the browser.
     """
-    return urlunparse((scheme, netloc, path, params, urlencode(query), fragment))
+    return urlunparse(
+        (scheme, netloc, path, params, urlencode(query), fragment))
 
 
 def alter_url(url, **components):

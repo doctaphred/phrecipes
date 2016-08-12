@@ -32,8 +32,7 @@ def prompt(cleanup_function, signalnum=signal.SIGINT):
                     - to exit immediately, press ctrl+C again
                     - to clean up and exit gracefully, enter 'c' or 'cleanup'
                     - to resume operation, press enter
-                (cleanup?): """
-                ))
+                (cleanup?): """))
             if choice and 'cleanup'.casefold().startswith(choice.casefold()):
                 print('Cleaning up...')
                 cleanup_function()

@@ -10,4 +10,3 @@ def get_main_dir():
         return Path.cwd()
     else:
         return Path(main_path).resolve().parent
-

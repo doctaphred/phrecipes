@@ -74,7 +74,8 @@ class UnboundTest:
         self.expected = expected
 
     def __repr__(self):
-        return 'UnboundTest({args}, {kwargs}, {expected})'.format_map(self.__dict__)
+        return 'UnboundTest({args}, {kwargs}, {expected})'.format_map(
+            self.__dict__)
 
     def case(self, function) -> Case:
         return Case(function, self.args, self.kwargs)
@@ -123,4 +124,3 @@ def run_tests(print_fails=True, print_passes=False):
                 if print_passes:
                     print(test)
     return passed and not failed
-

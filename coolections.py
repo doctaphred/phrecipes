@@ -63,7 +63,7 @@ def subdict(d, keys=None, item_filter=value_not_none):
 
 class CascadingDict:
     """Please never actually use this.
-    
+
     Update: use ChainMap instead:
     https://docs.python.org/3.5/library/collections.html#collections.ChainMap
 

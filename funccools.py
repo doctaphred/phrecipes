@@ -1,6 +1,3 @@
-from functools import wraps
-
-
 def call(*args, **kwargs):
     def decorator(callable):
         return callable(*args, **kwargs)
