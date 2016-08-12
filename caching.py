@@ -2,6 +2,34 @@ from functools import partial, wraps
 import weakref
 
 
+def memoize(func):
+    """Memoize the function according to its args.
+
+    This decorator does not work with kwargs or unhashable args; see
+    below for more robust and flexible approaches.
+
+    >>> print = memoize(print)
+    >>> print('ayy')
+    ayy
+    >>> print('ayy')
+    >>> print('lmao')
+    lmao
+    >>> print('ayy', 'lmao')
+    ayy lmao)
+    """
+    cache = {}
+
+    @wraps(func)
+    def memoized(*args):
+        try:
+            return cache[args]
+        except KeyError:
+            result = func(*args)
+            cache[args] = result
+            return result
+    return memoized
+
+
 def freeze(*args, **kwargs):
     return args, frozenset(kwargs.items())
 
