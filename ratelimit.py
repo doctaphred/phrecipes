@@ -29,13 +29,17 @@ class RateLimit:
 
         return self.interval - current_interval
 
-    def attempt(self, func, *args, **kwargs):
-        """Call the function, or raise RateLimited."""
+    def record_attempt(self):
+        """Raise RateLimited, or do nothing."""
         timestamp = self.clock()
         cooldown = self.cooldown(timestamp)
         if cooldown:
             raise RateLimited(cooldown)
         self.calls.append(timestamp)
+
+    def attempt(self, func, *args, **kwargs):
+        """Call the function, or raise RateLimited."""
+        self.record_attempt()
         return func(*args, **kwargs)
 
     def __call__(self, func):
