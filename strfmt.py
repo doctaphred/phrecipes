@@ -118,7 +118,7 @@ def argstr(*args, **kwargs):
     return '{}, {}'.format(args_str, kwargs_str)
 
 
-def count(items, singular, plural=None, zero=None, suffix='s'):
+def count(items, singular, plural=None, zero=None, *, suffix='s'):
     """Return a properly pluralized string representing the number of items.
 
     >>> one, two, zero = 'a', 'aa', ''
