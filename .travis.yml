@@ -4,4 +4,4 @@ python:
   - "3.5-dev"
   - "nightly"
 install: "pip install -r requirements/build.txt"
-script: "python -m doctest *.py"
+script: "./build"
