@@ -15,7 +15,7 @@ def memoize(func):
     >>> print('lmao')
     lmao
     >>> print('ayy', 'lmao')
-    ayy lmao)
+    ayy lmao
     """
     cache = {}
 
