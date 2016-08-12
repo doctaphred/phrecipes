@@ -118,6 +118,42 @@ def argstr(*args, **kwargs):
     return '{}, {}'.format(args_str, kwargs_str)
 
 
+def count(items, singular, plural=None, zero=None, suffix='s'):
+    """Return a properly pluralized string representing the number of items.
+
+    >>> one, two, zero = 'a', 'aa', ''
+
+    >>> count(one, 'apple')
+    '1 apple'
+    >>> count(two, 'apple')
+    '2 apples'
+    >>> count(zero, 'apple')
+    '0 apples'
+
+    >>> count(one, 'octopus')
+    '1 octopus'
+    >>> count(two, 'octopus', suffix='es')
+    '2 octopuses'
+    >>> count(two, 'octopus', 'octopi')
+    '2 octopi'
+    >>> count(zero, 'octopus', 'octopi', zero='octopi (whew!)')
+    '0 octopi (whew!)'
+    """
+    if plural is None:
+        plural = singular + suffix
+    if zero is None:
+        zero = plural
+
+    n = len(items)
+    if n == 0:
+        word = zero
+    elif n == 1:
+        word = singular
+    else:
+        word = plural
+    return '{} {}'.format(n, word)
+
+
 def pl(singular, plural, zero=None, placeholder='#'):
     """Return a function that returns an appropriate phrase for a given number.
 
