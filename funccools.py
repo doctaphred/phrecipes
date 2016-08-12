@@ -39,3 +39,10 @@ def only_when(condition):
                 return function
         return redecorator
     return conditional
+
+
+only_when.csvoss_edition = lambda condition: (
+    (lambda decorator: lambda function: decorator(function))
+    if condition else
+    (lambda decorator: lambda function: function)
+)
