@@ -34,6 +34,10 @@ def freeze(*args, **kwargs):
     return args, frozenset(kwargs.items())
 
 
+def only_args(*args, **kwargs):
+    return args
+
+
 def nop(*args, **kwargs):
     """Do nothing."""
     pass
