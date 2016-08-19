@@ -55,3 +55,34 @@ only_when.csvoss_edition = lambda condition: (
     if condition else
     (lambda decorator: lambda function: function)
 )
+
+
+def wrap(before=None, after=None, ex=None):
+    """Apply additional functions before and afterward."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+
+            mutable_args = list(args)
+            if before:
+                before(mutable_args, kwargs)
+            try:
+                result = func(*mutable_args, **kwargs)
+            except Exception as exception:
+                if ex:
+                    return ex(exception, args, kwargs)
+                else:
+                    raise
+            else:
+                if after:
+                    result = after(result, args, kwargs)
+            return result
+
+        return wrapper
+    return decorator
+
+
+def debug(before=None, after=None):
+    """Apply additional functions, unless compiled with -O."""
+    if not __debug__:
+        return passthrough
+    return wrap(before, after)
