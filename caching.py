@@ -17,7 +17,7 @@ def memoize(func):
     >>> print('ayy', 'lmao')
     ayy lmao
     """
-    cache = {}
+    cache = weakref.WeakValueDictionary()
 
     @wraps(func)
     def memoized(*args):
@@ -27,6 +27,9 @@ def memoize(func):
             result = func(*args)
             cache[args] = result
             return result
+
+    memoized._cache = cache
+
     return memoized
 
 
