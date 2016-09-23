@@ -17,18 +17,26 @@ def memoize(func):
     >>> print('ayy', 'lmao')
     ayy lmao
     """
-    cache = weakref.WeakValueDictionary()
+    weak_cache = weakref.WeakValueDictionary()
+    # Some objects can't have weak references.
+    # Beware of memory leaks.
+    # TODO: consider switching to an LRU cache
+    strong_cache = {}
 
     @wraps(func)
     def memoized(*args):
         try:
-            return cache[args]
+            return weak_cache[args]
         except KeyError:
-            result = func(*args)
-            cache[args] = result
-            return result
-
-    memoized._cache = cache
+            try:
+                return strong_cache[args]
+            except KeyError:
+                result = func(*args)
+                try:
+                    weak_cache[args] = result
+                except TypeError:
+                    strong_cache[args] = result
+                return result
 
     return memoized
 
