@@ -60,8 +60,8 @@ def read(obj):
     return obj.read()
 
 
-class FreshFile:
-    """Each read of FreshFile.data returns the file's current contents.
+class LiveFile:
+    """Each read of LiveFile.data returns the file's current contents.
 
     Polls the file every interval seconds in a separate thread.
 
@@ -91,10 +91,10 @@ class FreshFile:
             return self._data
 
 
-class FreshData:
+class LiveData:
 
     def __init__(self, path, loader=yaml.load):
-        self.file = FreshFile(path, loader=loader)
+        self.file = LiveFile(path, loader=loader)
         self._data = self.file.data
 
     @property
@@ -118,7 +118,7 @@ class FreshData:
         return len(self.data)
 
     def __repr__(self):
-        return 'FreshData({})<{!r}>'.format(self.file.path, self.data)
+        return 'LiveData({})<{!r}>'.format(self.file.path, self.data)
 
 
 if __name__ == '__main__':
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     print('Press enter to stop')
     input()
 
-    # $ python3 filewatch.py test.txt
+    # $ python3 live.py test.txt
     # Watching test.txt
     # Press enter to stop
     # test.txt first modified at 1453569373.0
