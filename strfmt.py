@@ -118,6 +118,15 @@ def argstr(*args, **kwargs):
     return '{}, {}'.format(args_str, kwargs_str)
 
 
+def callstr(obj, *args, **kwargs):
+    """Return a string representation of a call to the given object.
+
+    >>> callstr('ayy', 'lm', a='o')
+    "ayy('lm', a='o')"
+    """
+    return '{}({})'.format(obj, argstr(*args, **kwargs))
+
+
 def count(items, singular, plural=None, zero=None, *, suffix='s'):
     """Return a properly pluralized string representing the number of items.
 
