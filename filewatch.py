@@ -3,6 +3,8 @@ from importlib import reload
 from pathlib import Path
 from threading import Thread, Lock
 
+import yaml
+
 
 def _watch(callback, path, interval):
     path = Path(path)
@@ -87,6 +89,36 @@ class FreshFile:
                 with open(self.path) as f:
                     self._data = self.loader(f)
             return self._data
+
+
+class FreshData:
+
+    def __init__(self, path, loader=yaml.load):
+        self.file = FreshFile(path, loader=loader)
+        self._data = self.file.data
+
+    @property
+    def data(self):
+        try:
+            return self.file.data
+        except Exception as exc:
+            print()
+            print('Error reading {}: {}'.format(self.file.path, exc))
+            print('Falling back to last successful reading')
+            print()
+            return self._data
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __repr__(self):
+        return 'FreshData({})<{!r}>'.format(self.file.path, self.data)
 
 
 if __name__ == '__main__':
