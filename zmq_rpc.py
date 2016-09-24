@@ -5,8 +5,8 @@ from itertools import count
 import zmq
 
 
-def serve(obj, port=None, addr='tcp://*', context=None, debug=False):
-    """Make an object available for remote procedure calls via ØMQ."""
+def serve(procs, port=None, addr='tcp://*', context=None, debug=False):
+    """Make some procedures available for remote calls via ØMQ."""
     if context is None:
         context = zmq.Context.instance()
 
@@ -29,8 +29,8 @@ def serve(obj, port=None, addr='tcp://*', context=None, debug=False):
                   .format(start, i, start - idle))
             try:
                 request = socket.recv_json()
-                method, *args = request
-                result = getattr(obj, method)(*args)
+                name, *args = request
+                result = procs[name](*args)
                 reply = {'result': result}
                 print(reply)
                 socket.send_json(reply)
@@ -47,4 +47,10 @@ def serve(obj, port=None, addr='tcp://*', context=None, debug=False):
 
 
 if __name__ == '__main__':
-    serve({}, 6379)  # Look Ma, Redis!
+    data = {}
+    procs = {
+        'GET': data.__getitem__,
+        'SET': data.__setitem__,
+        'DEL': data.__delitem__,
+    }
+    serve(procs, 6379)  # Look Ma, Redis!
