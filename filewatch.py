@@ -54,33 +54,39 @@ def autoreload(module, interval=0.5):
     watch(lambda _: reload(module), module.__file__, interval=interval)
 
 
+def read(obj):
+    return obj.read()
+
+
 class FreshFile:
-    """Each call to FreshFile.read returns the file's current contents.
+    """Each read of FreshFile.data returns the file's current contents.
 
     Polls the file every interval seconds in a separate thread.
 
     See watch.
     """
 
-    def __init__(self, path, interval=0.5, lazy=True):
+    def __init__(self, path, loader=read, interval=0.5, lazy=False):
         self.path = path
+        self.loader = loader
         self._lock = Lock()
-        self._contents = None
+        self._data = None
         if not lazy:
-            self.read()
+            self.data
         watch(lambda _: self._reset(), path, interval=interval)
 
     def _reset(self):
         with self._lock:
-            self._contents = None
+            self._data = None
 
-    def read(self):
+    @property
+    def data(self):
         """Return the current contents of the file."""
         with self._lock:
-            if self._contents is None:
+            if self._data is None:
                 with open(self.path) as f:
-                    self._contents = f.read()
-            return self._contents
+                    self._data = self.loader(f)
+            return self._data
 
 
 if __name__ == '__main__':
