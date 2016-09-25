@@ -133,8 +133,8 @@ def kwarg_memoize(func=..., *, cache=..., apply_defaults=True):
     Note also that some functions may not have an inspectable signature
     defined, and will raise ValueError unless apply_defaults is False:
 
-        >>> kwarg_memoize(print, apply_defaults=False)
-        >>> kwarg_memoize(print)
+        >>> print_once = kwarg_memoize(print, apply_defaults=False)
+        >>> print_once = kwarg_memoize(print)
         Traceback (most recent call last):
           ...
         ValueError: no signature found for builtin <built-in function print>
