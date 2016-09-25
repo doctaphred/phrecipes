@@ -2,21 +2,8 @@ from functools import partial, wraps
 import weakref
 
 
-def memoize(func):
-    """Memoize the function according to its args.
-
-    This decorator does not work with kwargs or unhashable args; see
-    below for more robust and flexible approaches.
-
-    >>> print = memoize(print)
-    >>> print('ayy')
-    ayy
-    >>> print('ayy')
-    >>> print('lmao')
-    lmao
-    >>> print('ayy', 'lmao')
-    ayy lmao
-    """
+def basic_memoize(func):
+    """Basic implementation, just for reference."""
     cache = {}
 
     @wraps(func)
@@ -31,6 +18,70 @@ def memoize(func):
 
     return memoized
 
+
+def memoize(func=..., *, cache=..., key=...):
+    """Cache and reuse a function's return values.
+
+    The default cache key is the function's args tuple. When memoizing a
+    function which accepts kwargs or unhashable args, a suitable key
+    function must also be provided.
+
+    The default cache is a dictionary. Unless explicitly removed,
+    memoized results will remain in the cache, preventing them from
+    being garbage collected, until the cache itself is deleted --
+    frequently until the program exits. See functools.lru_cache for an
+    alternative memoizer with a limited-size cache.
+
+    >>> print_once = memoize(print)
+    >>> print_once('ayy')
+    ayy
+    >>> print_once('ayy')
+    >>> print_once('lmao')
+    lmao
+
+    Watch out for unhashable arg values:
+
+    >>> print_once('ayy', 'lmao')
+    ayy lmao
+    >>> print_once(['ayy', 'lmao'])
+    Traceback (most recent call last):
+      ...
+    TypeError: unhashable type: 'list'
+    """
+    # This construct allows the user to either call this decorator with
+    # optional keyword args, or just apply it directly to a function.
+    if func is ...:
+        # The decorator was called with optional keyword args:
+        # return another decorator which uses them when applied.
+        return partial(memoize, cache=cache, key=key)
+    # The decorator was applied to a function.
+
+    if cache is ...:
+        cache = {}
+
+    if key is not ...:
+        def memoized(*args, **kwargs):
+            cache_key = key(*args, **kwargs)
+            try:
+                return cache[cache_key]
+            except KeyError:
+                cache[cache_key] = result = func(*args, **kwargs)
+            return result
+    else:
+        # Define this version separately to avoid extraneous calls to a
+        # pass-through key function. (The cost adds up in inner loops!)
+        def memoized(*args):
+            try:
+                return cache[args]
+            except KeyError:
+                cache[args] = result = func(*args)
+            return result
+
+    memoized = wraps(func)(memoized)
+    memoized._cache = cache
+    memoized._key = key
+
+    return memoized
 
 def freeze(*args, **kwargs):
     return args, frozenset(kwargs.items())
