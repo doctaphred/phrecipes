@@ -4,7 +4,7 @@ import heapq
 class Heap:
     """Simple wrapper around heapq functions.
 
-    Why the standard library doesn't a class like this is beyond me...
+    Why the standard library doesn't include a class like this is beyond me...
     """
 
     def __init__(self, items=None):
