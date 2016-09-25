@@ -1,4 +1,5 @@
 from functools import partial, wraps
+from inspect import signature
 import weakref
 
 
@@ -82,6 +83,108 @@ def memoize(func=..., *, cache=..., key=...):
     memoized._key = key
 
     return memoized
+
+
+def kwarg_memoize(func=..., *, cache=..., apply_defaults=True):
+    """Memoize a function with kwargs, applying their default values.
+
+        >>> @kwarg_memoize
+        ... def say(a, b='lmao'):
+        ...     print(a, b)
+        >>> say('ayy')
+        ayy lmao
+        >>> say(a='ayy')
+        >>> say('ayy', 'lmao')
+        >>> say('ayy', b='lmao')
+        >>> say(a='ayy', b='lmao')
+        >>> say(b='lmao', a='ayy')
+        >>> say('ayy', b='waddup')
+        ayy waddup
+
+    If apply_defaults is True, the cache key incorporates the cached
+    function's default argument values. If it is False, the cache key
+    uses the signature the cached function is actually called with,
+    ignoring default values. This may provide slightly better
+    efficiency, but will cause calls with different signatures to be
+    cached separately, even if they are semantically equivalent:
+
+        >>> @kwarg_memoize(apply_defaults=False)
+        ... def say(a, b='lmao'):
+        ...     print(a, b)
+        >>> say('ayy')
+        ayy lmao
+        >>> say(a='ayy')
+        ayy lmao
+        >>> say('ayy', 'lmao')
+        ayy lmao
+        >>> say('ayy', b='lmao')
+        ayy lmao
+        >>> say('ayy')
+        >>> say(a='ayy')
+        >>> say('ayy', 'lmao')
+        >>> say('ayy', b='lmao')
+
+    Kwarg ordering is still ignored, though:
+
+        >>> say(a='ayy', b='lmao')
+        ayy lmao
+        >>> say(b='lmao', a='ayy')
+
+    Note also that some functions may not have an inspectable signature
+    defined, and will raise ValueError unless apply_defaults is False:
+
+        >>> kwarg_memoize(print, apply_defaults=False)
+        >>> kwarg_memoize(print)
+        Traceback (most recent call last):
+          ...
+        ValueError: no signature found for builtin <built-in function print>
+
+    """
+    if apply_defaults:
+        key = signature_freezer(func)
+    else:
+        key = freeze
+    return memoize(func, key=key, cache=cache)
+
+
+def cache(func=..., *, apply_defaults=True):
+    """Memoize the function using weak references.
+
+    Once the decorated function has been called with a given signature,
+    it will return the same object for all subsequent calls with that
+    signature, as long as another non-weak reference to the object still
+    exists.
+
+        >>> class WeakReferenceableList(list):
+        ...     pass  # Built-in lists can't be weak-referenced
+
+        >>> @cache
+        ... def say(word, also='lmao'):
+        ...     return WeakReferenceableList([word, also])
+        >>> say('ayy') is say('ayy')
+        True
+        >>> say('ayy') is say('ayy', 'lmao')
+        True
+        >>> say('ayy') is say('ayy', also='lmao')
+        True
+        >>> say('ayy') is say(also='lmao', word='ayy')
+        True
+    """
+    return kwarg_memoize(func, cache=weakref.WeakValueDictionary(),
+                         apply_defaults=apply_defaults)
+
+
+def signature_freezer(func):
+    """Compute "frozen" signatures, applying default values."""
+    sig = signature(func)
+
+    def freeze(*args, **kwargs):
+        ba = sig.bind(*args, **kwargs)
+        ba.apply_defaults()
+        return ba.args, frozenset(ba.kwargs.items())
+
+    return freeze
+
 
 def freeze(*args, **kwargs):
     return args, frozenset(kwargs.items())
