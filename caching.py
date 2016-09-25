@@ -20,34 +20,100 @@ def basic_memoize(func):
     return memoized
 
 
-def memoize(func=..., *, cache=..., key=...):
-    """Cache and reuse a function's return values.
+def memoize(func=..., *, cache=..., key='received'):
+    """Preserve and reuse a function's return values.
 
-    The default cache key is the function's args tuple. When memoizing a
-    function which accepts kwargs or unhashable args, a suitable key
-    function must also be provided.
+    The default cache is a dict. The key may be 'received', 'called',
+    'positional', or a custom function which accepts *args and **kwargs.
 
-    The default cache is a dictionary. Unless explicitly removed,
-    memoized results will remain in the cache, preventing them from
-    being garbage collected, until the cache itself is deleted --
-    frequently until the program exits. See functools.lru_cache for an
-    alternative memoizer with a limited-size cache.
+    If key is 'received' (the default), the cache key uses the arguments
+    the memoized function actually receives when called, appropriately
+    handling keyword args and default values:
 
-        >>> print_once = memoize(print)
-        >>> print_once('ayy')
-        ayy
-        >>> print_once('ayy')
-        >>> print_once('lmao')
-        lmao
-
-    Watch out for unhashable arg values:
-
-        >>> print_once('ayy', 'lmao')
+        >>> @memoize
+        ... def say(something, also='lmao'):
+        ...     print(something, also)
+        >>> say('ayy')
         ayy lmao
-        >>> print_once(['ayy', 'lmao'])
+        >>> say(something='ayy')
+        >>> say('ayy', 'lmao')
+        >>> say('ayy', also='lmao')
+        >>> say(something='ayy', also='lmao')
+        >>> say(also='lmao', something='ayy')
+        >>> say('ayy', also='waddup')
+        ayy waddup
+
+    If key is 'called', the cache key uses the signature the cached
+    function is actually called with. This causes calls with different
+    signatures to be cached separately, even if they are semantically
+    equivalent:
+
+        >>> @memoize(key='called')
+        ... def say(something, also='lmao'):
+        ...     print(something, also)
+        >>> say('ayy')
+        ayy lmao
+        >>> say(something='ayy')
+        ayy lmao
+        >>> say('ayy', 'lmao')
+        ayy lmao
+        >>> say('ayy', also='lmao')
+        ayy lmao
+        >>> say('ayy')
+        >>> say(something='ayy')
+        >>> say('ayy', 'lmao')
+        >>> say('ayy', also='lmao')
+
+    Keyword argument ordering is still ignored, though:
+
+        >>> say(something='ayy', also='lmao')
+        ayy lmao
+        >>> say(also='lmao', something='ayy')
+
+    If key is 'positional', the cache key uses only the positional
+    arguments. This may provide slightly better performance, but
+    disallows passing keyword args, and may interact unexpectedly with
+    default values:
+
+        >>> @memoize(key='positional')
+        ... def say(something, also='lmao'):
+        ...     print(something, also)
+        >>> say('ayy')
+        ayy lmao
+        >>> say('ayy', 'lmao')
+        ayy lmao
+        >>> say('ayy')
+        >>> say('ayy', 'lmao')
+        >>> say('ayy', also='lmao')
+        Traceback (most recent call last):
+          ...
+        TypeError: memoized() got an unexpected keyword argument 'also'
+
+    In any case, argument values must be hashable:
+
+        >>> say(['ayy', 'lmao'])
         Traceback (most recent call last):
           ...
         TypeError: unhashable type: 'list'
+
+    Also, some functions may not have an inspectable signature, and will
+    raise ValueError if memoized with the default key:
+
+        >>> print_once = memoize(print, key='positional')
+        >>> print_once = memoize(print, key='called')
+        >>> print_once = memoize(print)
+        Traceback (most recent call last):
+          ...
+        ValueError: no signature found for builtin <built-in function print>
+
+    A custom cache or key function may be provided to work around either
+    of these issues.
+
+    The default cache is a regular, non-evicting dict: unless explicitly
+    removed, memoized results will remain in the cache, preventing them
+    from being garbage collected, until the cache itself is deleted --
+    frequently until the program exits. See functools.lru_cache for an
+    alternative memoizer with a limited-size cache.
     """
     # This construct allows the user to either call this decorator with
     # optional keyword args, or just apply it directly to a function.
@@ -60,7 +126,24 @@ def memoize(func=..., *, cache=..., key=...):
     if cache is ...:
         cache = {}
 
-    if key is not ...:
+    if key == 'positional':
+        # Define this version separately to avoid extraneous calls to a
+        # pass-through key function. (The cost adds up in inner loops!)
+        @wraps(func)
+        def memoized(*args):
+            try:
+                return cache[args]
+            except KeyError:
+                cache[args] = result = func(*args)
+            return result
+    else:
+        if key == 'received':
+            key = signature_freezer(func)
+        elif key == 'called':
+            key = freeze
+        # Otherwise, assume key is a custom function
+
+        @wraps(func)
         def memoized(*args, **kwargs):
             cache_key = key(*args, **kwargs)
             try:
@@ -68,86 +151,14 @@ def memoize(func=..., *, cache=..., key=...):
             except KeyError:
                 cache[cache_key] = result = func(*args, **kwargs)
             return result
-    else:
-        # Define this version separately to avoid extraneous calls to a
-        # pass-through key function. (The cost adds up in inner loops!)
-        def memoized(*args):
-            try:
-                return cache[args]
-            except KeyError:
-                cache[args] = result = func(*args)
-            return result
 
-    memoized = wraps(func)(memoized)
     memoized._cache = cache
     memoized._key = key
 
     return memoized
 
 
-def kwarg_memoize(func=..., *, cache=..., apply_defaults=True):
-    """Memoize a function with kwargs, applying their default values.
-
-        >>> @kwarg_memoize
-        ... def say(a, b='lmao'):
-        ...     print(a, b)
-        >>> say('ayy')
-        ayy lmao
-        >>> say(a='ayy')
-        >>> say('ayy', 'lmao')
-        >>> say('ayy', b='lmao')
-        >>> say(a='ayy', b='lmao')
-        >>> say(b='lmao', a='ayy')
-        >>> say('ayy', b='waddup')
-        ayy waddup
-
-    If apply_defaults is True, the cache key incorporates the cached
-    function's default argument values. If it is False, the cache key
-    uses the signature the cached function is actually called with,
-    ignoring default values. This may provide slightly better
-    efficiency, but will cause calls with different signatures to be
-    cached separately, even if they are semantically equivalent:
-
-        >>> @kwarg_memoize(apply_defaults=False)
-        ... def say(a, b='lmao'):
-        ...     print(a, b)
-        >>> say('ayy')
-        ayy lmao
-        >>> say(a='ayy')
-        ayy lmao
-        >>> say('ayy', 'lmao')
-        ayy lmao
-        >>> say('ayy', b='lmao')
-        ayy lmao
-        >>> say('ayy')
-        >>> say(a='ayy')
-        >>> say('ayy', 'lmao')
-        >>> say('ayy', b='lmao')
-
-    Kwarg ordering is still ignored, though:
-
-        >>> say(a='ayy', b='lmao')
-        ayy lmao
-        >>> say(b='lmao', a='ayy')
-
-    Note also that some functions may not have an inspectable signature
-    defined, and will raise ValueError unless apply_defaults is False:
-
-        >>> print_once = kwarg_memoize(print, apply_defaults=False)
-        >>> print_once = kwarg_memoize(print)
-        Traceback (most recent call last):
-          ...
-        ValueError: no signature found for builtin <built-in function print>
-
-    """
-    if apply_defaults:
-        key = signature_freezer(func)
-    else:
-        key = freeze
-    return memoize(func, key=key, cache=cache)
-
-
-def cache(func=..., *, apply_defaults=True):
+def cache(func=..., *, key='received'):
     """Memoize the function using weak references.
 
     Once the decorated function has been called with a given signature,
@@ -170,8 +181,7 @@ def cache(func=..., *, apply_defaults=True):
         >>> say('ayy') is say(also='lmao', word='ayy')
         True
     """
-    return kwarg_memoize(func, cache=weakref.WeakValueDictionary(),
-                         apply_defaults=apply_defaults)
+    return memoize(func, cache=weakref.WeakValueDictionary(), key=key)
 
 
 def signature_freezer(func):
