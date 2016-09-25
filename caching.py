@@ -33,21 +33,21 @@ def memoize(func=..., *, cache=..., key=...):
     frequently until the program exits. See functools.lru_cache for an
     alternative memoizer with a limited-size cache.
 
-    >>> print_once = memoize(print)
-    >>> print_once('ayy')
-    ayy
-    >>> print_once('ayy')
-    >>> print_once('lmao')
-    lmao
+        >>> print_once = memoize(print)
+        >>> print_once('ayy')
+        ayy
+        >>> print_once('ayy')
+        >>> print_once('lmao')
+        lmao
 
     Watch out for unhashable arg values:
 
-    >>> print_once('ayy', 'lmao')
-    ayy lmao
-    >>> print_once(['ayy', 'lmao'])
-    Traceback (most recent call last):
-      ...
-    TypeError: unhashable type: 'list'
+        >>> print_once('ayy', 'lmao')
+        ayy lmao
+        >>> print_once(['ayy', 'lmao'])
+        Traceback (most recent call last):
+          ...
+        TypeError: unhashable type: 'list'
     """
     # This construct allows the user to either call this decorator with
     # optional keyword args, or just apply it directly to a function.
