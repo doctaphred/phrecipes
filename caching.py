@@ -408,7 +408,6 @@ def instance_cached(cls=..., *, cache=cache):
         return partial(instance_cached, cache=cache)
     # The decorator was applied to a function.
 
-
     overridden_new = cls.__new__ is not object.__new__
     overridden_init = cls.__init__ is not object.__init__
 
