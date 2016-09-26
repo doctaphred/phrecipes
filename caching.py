@@ -253,179 +253,161 @@ class Cached(type):
             return obj
 
 
-def weak_cached(func=None, *, key_func=freeze):
-    """Cache the function's return values with weak references.
-
-    Once the decorated function has been called with a given set of args
-    and kwargs, it will return the same object for all subsequent calls,
-    as long as another non-weak reference to the object still exists.
-
-    This decorator may be applied directly, or may be called in order to
-    specify `key_func`, which is called to determine a cache key from a
-    given set of args and kwargs. The default function will not work if
-    `args` or `kwargs` contain any unhashable values.
-    """
-    # Allow this decorator to work with or without being called
-    if func is None:
-        return partial(weak_cached, key_func=key_func)
-
-    cache = weakref.WeakValueDictionary()
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        key = key_func(*args, **kwargs)
-        try:
-            return cache[key]
-        except KeyError:
-            cache[key] = result = func(*args, **kwargs)
-            return result
-
-    wrapper._cache = cache
-    wrapper._cache_key = key_func
-    return wrapper
-
-
-class WeakCached(type):
-    __call__ = weak_cached(type.__call__)
-
-
-def instance_cached(cls=None, *, cache_func=weak_cached):
+def instance_cached(cls=..., *, cache=cache):
     """Decorator to cache a class' instances.
 
-    >>> @instance_cached
-    ... class Test:
-    ...     def __new__(cls, value):
-    ...         print('__new__', value)
-    ...         return object.__new__(cls)
-    ...     def __init__(self, value):
-    ...         print('__init__', value)
-    ...         self.value = value
+        >>> @instance_cached
+        ... class Test:
+        ...     def __new__(cls, value=1):
+        ...         print('__new__', value)
+        ...         return object.__new__(cls)
+        ...     def __init__(self, value=1):
+        ...         print('__init__', value)
+        ...         self.value = value
 
     tl;dr: constructors with the same arguments return the same object:
 
-    >>> Test(1) is Test(1)
-    __new__ 1
-    __init__ 1
-    True
+        >>> Test(1) is Test(1)
+        __new__ 1
+        __init__ 1
+        True
 
-    The default cache function, `weak_cached`, only holds each value as
-    long as another non-weak reference to it remains.
+    The default cache function only holds each value as long as another
+    non-weak reference to it remains.
 
     As long as a reference persists, neither __new__ nor __init__ is
     called twice for the same set of arguments: the constructor returns
     a cached instance instead.
 
-    >>> t = Test(1)
-    __new__ 1
-    __init__ 1
-    >>> t is Test(1)
-    True
-    >>> Test(1) is Test(1)
-    True
-    >>> Test(1) is Test(2)
-    __new__ 2
-    __init__ 2
-    False
+        >>> t = Test(1)
+        __new__ 1
+        __init__ 1
+        >>> t is Test(1)
+        True
+        >>> Test(1) is Test(1)
+        True
+        >>> Test(1) is Test(2)
+        __new__ 2
+        __init__ 2
+        False
+
+    Default argument values are handled appropriately:
+
+        >>> default = Test()
+        >>> default is t
+        True
+        >>> Test() is Test(1) is Test(value=1)
+        True
 
     Cached instances are deleted when no more references remain, and
     subsequent constructor calls execute normally:
 
-    >>> del t
-    >>> Test(1) is Test(1)
-    __new__ 1
-    __init__ 1
-    True
+        >>> del t
+        >>> Test(1) is Test(1)
+        True
+        >>> del default
+        >>> t = Test()
+        __new__ 1
+        __init__ 1
+        >>> t = Test()
+
+        >>> t.value, Test().value, Test(1).value, Test(value=1).value
+        (1, 1, 1, 1)
 
     Names, docstrings, etc. are unaffected:
 
-    >>> Test.__new__.__qualname__
-    'Test.__new__'
-    >>> Test.__init__.__qualname__
-    'Test.__init__'
+        >>> Test.__new__.__qualname__
+        'Test.__new__'
+        >>> Test.__init__.__qualname__
+        'Test.__init__'
 
-    Can be used with other caching functions, which may behave differently:
+    Can be used with other caches, which may behave differently:
 
-    >>> from functools import lru_cache
-    >>> @instance_cached(cache_func=lru_cache(maxsize=1))
-    ... class Test:
-    ...     def __new__(cls, value):
-    ...         print('__new__', value)
-    ...         return object.__new__(cls)
-    ...     def __init__(self, value):
-    ...         print('__init__', value)
-    ...         self.value = value
+        >>> from functools import lru_cache
+        >>> @instance_cached(cache=lru_cache(maxsize=1))
+        ... class Test:
+        ...     def __new__(cls, value):
+        ...         print('__new__', value)
+        ...         return object.__new__(cls)
+        ...     def __init__(self, value):
+        ...         print('__init__', value)
+        ...         self.value = value
 
-    >>> Test(1) is Test(1)
-    __new__ 1
-    __init__ 1
-    True
-    >>> t = Test(1)  # The LRU cache persists...
-    >>> t is Test(1)
-    True
-    >>> t2 = Test(2)
-    __new__ 2
-    __init__ 2
-    >>> Test(1) is Test(2)  # ...but, it can only remember a single item.
-    __new__ 1
-    __init__ 1
-    __new__ 2
-    __init__ 2
-    False
+        >>> Test(1) is Test(1)
+        __new__ 1
+        __init__ 1
+        True
+        >>> t = Test(1)  # The LRU cache persists...
+        >>> t is Test(1)
+        True
+        >>> t2 = Test(2)
+        __new__ 2
+        __init__ 2
+        >>> Test(1) is Test(2)  # ...but, it can only remember a single item.
+        __new__ 1
+        __init__ 1
+        __new__ 2
+        __init__ 2
+        False
 
     Also works for classes that don't override __new__ or __init__:
 
-    >>> @instance_cached
-    ... class Test:
-    ...     pass
+        >>> @instance_cached
+        ... class Test:
+        ...     pass
 
-    >>> Test() is Test()
-    True
-    >>> Test.__new__.__qualname__
-    'object.__new__'
-    >>> Test.__init__.__qualname__
-    'object.__init__'
-    >>> Test(None)
-    Traceback (most recent call last):
-      ...
-    TypeError: object() takes no parameters
+        >>> Test() is Test()
+        True
+        >>> Test.__new__.__qualname__
+        'object.__new__'
+        >>> Test.__init__.__qualname__
+        'object.__init__'
+        >>> Test(None)
+        Traceback (most recent call last):
+          ...
+        TypeError: object() takes no parameters
 
-    >>> @instance_cached
-    ... class Test:
-    ...     def __new__(cls, whatever):
-    ...         return object.__new__(cls)
+        >>> @instance_cached
+        ... class Test:
+        ...     def __new__(cls, meh):
+        ...         return object.__new__(cls)
 
-    >>> Test(None) is Test(None)
-    True
-    >>> Test.__new__.__qualname__
-    'Test.__new__'
-    >>> Test.__init__.__qualname__
-    'object.__init__'
-    >>> Test()
-    Traceback (most recent call last):
-      ...
-    TypeError: __new__() missing 1 required positional argument: 'whatever'
+        >>> Test(None) is Test(None)
+        True
+        >>> Test.__new__.__qualname__
+        'Test.__new__'
+        >>> Test.__init__.__qualname__
+        'object.__init__'
+        >>> Test()
+        Traceback (most recent call last):
+          ...
+        TypeError: missing a required argument: 'meh'
 
-    >>> @instance_cached
-    ... class Test:
-    ...     def __init__(self, whatever):
-    ...         pass
+        >>> @instance_cached
+        ... class Test:
+        ...     def __init__(self, meh):
+        ...         pass
 
-    >>> Test(None) is Test(None)
-    True
-    >>> Test.__new__.__qualname__
-    'object.__new__'
-    >>> Test.__init__.__qualname__
-    'Test.__init__'
-    >>> Test()
-    Traceback (most recent call last):
-      ...
-    TypeError: __init__() missing 1 required positional argument: 'whatever'
+        >>> Test(None) is Test(None)
+        True
+        >>> Test.__new__.__qualname__
+        'object.__new__'
+        >>> Test.__init__.__qualname__
+        'Test.__init__'
+        >>> Test()
+        Traceback (most recent call last):
+          ...
+        TypeError: __init__() missing 1 required positional argument: 'meh'
 
-    TODO: handle default arguments.
     """
-    # Allow this decorator to work with or without being called
-    if cls is None:
-        return partial(instance_cached, cache_func=cache_func)
+    # This construct allows the user to either call this decorator with
+    # optional keyword args, or just apply it directly to a function.
+    if cls is ...:
+        # The decorator was called with optional keyword args:
+        # return another decorator which uses them when applied.
+        return partial(instance_cached, cache=cache)
+    # The decorator was applied to a function.
+
 
     overridden_new = cls.__new__ is not object.__new__
     overridden_init = cls.__init__ is not object.__init__
@@ -444,7 +426,7 @@ def instance_cached(cls=None, *, cache_func=weak_cached):
     else:
         old_init = cls.__init__
 
-    @cache_func
+    @cache
     @wraps(old_new)
     def new_new(cls, *args, **kwargs):
         new_obj = old_new(cls, *args, **kwargs)
