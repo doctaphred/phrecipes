@@ -138,7 +138,7 @@ def memoize(func=..., *, cache=..., key='received'):
             return result
     else:
         if key == 'received':
-            key = signature_freezer(func)
+            key = freeze_as_received(func)
         elif key == 'called':
             key = freeze
         # Otherwise, assume key is a custom function
@@ -184,7 +184,7 @@ def cache(func=..., *, key='received'):
     return memoize(func, cache=weakref.WeakValueDictionary(), key=key)
 
 
-def signature_freezer(func):
+def freeze_as_received(func):
     """Compute "frozen" signatures, applying default values."""
     sig = signature(func)
 
