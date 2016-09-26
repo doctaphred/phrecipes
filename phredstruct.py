@@ -1,7 +1,7 @@
-from caching import only_args, weak_cached
+from caching import cache
 
 
-@weak_cached(key_func=only_args)
+@cache(key='positional')
 def struct(*attrs):
 
     class Struct:
