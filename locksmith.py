@@ -79,7 +79,7 @@ class Locksmith:
 
 
 if __name__ == '__main__':
-    from zmq_rpc import serve
+    from zmqrpc import serve
 
     smith = Locksmith()
 
