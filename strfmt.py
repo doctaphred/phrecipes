@@ -1,6 +1,7 @@
 import sys
 
 from coolections import subdict
+from magic import magic
 
 
 class SafeSub(dict):
@@ -38,6 +39,25 @@ def fmt(s, **kwargs):
     keys = SafeSub(sys._getframe(1).f_locals)
     keys.update(kwargs)
     return s.format_map(keys)
+
+
+@magic
+class show:
+    """
+    >>> x = '''ayy
+    lmao'''
+    >>> show.x
+    x = 'ayy\nlmao'
+    """
+    def __getattr__(self, name):
+        value = sys._getframe(1).f_locals[name]
+        print('{} = {!r}'.format(name, value))
+
+    def __call__(self, *exclude):
+        f_locals = sys._getframe(1).f_locals
+        for name in sorted(f_locals):
+            if name not in exclude:
+                print('{} = {!r}'.format(name, f_locals[name]))
 
 
 def vars_repr(obj, var_names=None, var_filter=None):
