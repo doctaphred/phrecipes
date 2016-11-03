@@ -50,7 +50,14 @@ class show:
     x = 'ayy\nlmao'
     """
     def __getattr__(self, name):
-        value = sys._getframe(1).f_locals[name]
+        try:
+            value = sys._getframe(1).f_locals[name]
+        except KeyError as exc:
+            # inspect.unwrap relies on hasattr, which literally just
+            # calls getattr and checks for AttributeError.
+            # doctest uses inspect.unwrap, otherwise this would not
+            # merit fixing here.
+            raise AttributeError(exc)
         print('{} = {!r}'.format(name, value))
 
     def __call__(self, *exclude):
