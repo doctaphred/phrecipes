@@ -4,7 +4,8 @@ https://en.wikipedia.org/wiki/Metric_prefix
 """
 from decimal import Decimal
 
-
+# http://www.wolframalpha.com/input/?i=hella
+H = hella = octillion = Decimal('1e27')
 Y = yotta = septillion = Decimal('1e24')
 Z = zetta = sextillion = Decimal('1e21')
 E = exa = quintillion = Decimal('1e18')
