@@ -8,7 +8,7 @@ https://github.com/pytoolz/toolz
 from collections import defaultdict
 from collections.abc import Iterator
 from functools import lru_cache, partial, wraps
-from itertools import tee, filterfalse
+from itertools import chain, filterfalse, tee
 
 
 def filters(iterable, *predicates):
@@ -104,25 +104,32 @@ def defaultdivvy(iterable, predicate):
     return results
 
 
-def unique(iterable, key=None):
+def unique(*iterables, key=None):
     """Yield unique elements, preserving order.
 
     >>> ''.join(unique('AAAABBBCCDAABBB'))
     'ABCD'
+    >>> ''.join(unique('AAAA', 'BBBC', 'CDA', 'ABBB'))
+    'ABCD'
     >>> ''.join(unique('ABBCcAD', key=str.casefold))
     'ABCD'
     """
-    seen = set()
-    see = seen.add  # Avoid inner-loop name lookup
+    combined = chain.from_iterable(iterables)
+    yielded = set()
+    # Avoid inner-loop name lookups
+    already_yielded = yielded.__contains__
+    remember = yielded.add
+
     if key is None:
-        for element in filterfalse(seen.__contains__, iterable):
-            see(element)
+        for element in filterfalse(already_yielded, combined):
+            remember(element)
             yield element
+
     else:
-        for element in iterable:
+        for element in combined:
             k = key(element)
-            if k not in seen:
-                see(k)
+            if not already_yielded(k):
+                remember(k)
                 yield element
 
 
