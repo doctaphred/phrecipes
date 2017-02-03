@@ -30,11 +30,13 @@ class cached_property:
         if instance is None:
             return self
         attrs = instance.__dict__
+        method = self.__wrapped__
+        name = method.__name__
         try:
-            return attrs[self.__wrapped__.__name__]
+            return attrs[name]
         except KeyError:
-            result = self.__wrapped__(instance)
-            attrs[self.__wrapped__.__name__] = result
+            result = method(instance)
+            attrs[name] = result
             return result
 
     def __set__(self, instance, value):
