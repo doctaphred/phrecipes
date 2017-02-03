@@ -1,5 +1,27 @@
 class cached_property:
-    """Convert a method into a cached property."""
+    """Convert a method into a cached property.
+
+    >>> class C:
+    ...     @cached_property
+    ...     def a(self):
+    ...         print('running')
+    ...         return 1
+
+    >>> c = C()
+    >>> c.a
+    running
+    1
+    >>> c.a
+    1
+    >>> c.a = 2
+    >>> c.a
+    2
+    >>> del c.a
+    >>> c.a
+    running
+    1
+
+    """
 
     def __init__(self, method):
         self.__wrapped__ = method
