@@ -1,3 +1,57 @@
+from collections.abc import Mapping
+from itertools import chain
+
+from itercools import unique
+
+
+def all_eq(objs):
+    """Check if all elements of objs compare equal.
+
+    objs must support .count() and .__getitem__() (like list or tuple),
+    and each obj's .__eq__() must behave semi-reasonably.
+    """
+    assert objs
+    matches = objs.count(objs[0])
+    assert matches  # objs[0] == objs[0] must return True
+    return matches == len(objs)
+
+
+class MISSING:
+    """Sentinel denoting "key not in mapping".
+
+    Implemented as a class instead of object() for serializability.
+    """
+    pass
+
+
+def values(mappings, key, missing=MISSING):
+    for mapping in mappings:
+        try:
+            # Only __getitem__() is required; don't use get()
+            yield mapping[key]
+        except KeyError:
+            yield missing
+
+
+def diffs(*mappings, missing=MISSING):
+    """Yield keys and values which differ between the two mappings.
+
+    A 'mapping' is any object which implements keys() and __getitem__().
+    """
+    assert mappings
+    assert all(isinstance(mapping, Mapping) for mapping in mappings)
+
+    # Defer to __eq__(), even if it contradicts the algorithm below
+    if all_eq(mappings):
+        return
+
+    keys = chain.from_iterable(mapping.keys() for mapping in mappings)
+    for key in unique(keys):
+        vals = tuple(values(mappings, key))
+        if not all_eq(vals):
+            yield key, vals
+
+
 def value_not_none(k, v):
     return v is not None
 
