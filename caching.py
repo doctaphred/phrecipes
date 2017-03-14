@@ -438,3 +438,51 @@ def instance_cached(cls=..., *, cache=cache):
     cls.__init__ = wraps(old_init)(nop)
 
     return cls
+
+
+def lru_cache(maxsize=128):
+    """Basic-but-decent implementation, for use in Python 2.
+
+    Doesn't work with keyword args, and doesn't provide cache_info()
+    like Python 3's functools.lru_cache(). Also doesn't support the
+    'typed' argument, so cache keys consider only objects' __eq__(), not
+    their types.
+
+    *Does* set cache_clear() on the decorated function.
+
+    This might not be the most performant implementation out there, but
+    it's short, easy to understand, and copy-pasteable.
+    """
+
+    def decorator(func, maxsize=maxsize):
+        cache = OrderedDict()
+        # Store local references to these functions
+        # to avoid extra dict lookups in the wrapper
+        # (same reason as maxsize=maxsize above)
+        cache_pop = cache.pop
+        cache_popitem = cache.popitem
+        cache_setitem = cache.__setitem__
+        cache_len = cache.__len__
+
+        @wraps(func)
+        def wrapper(*args):
+            try:
+                result = cache_pop(args)
+            except KeyError:
+                result = func(*args)
+            # Move the result to the last, "most recently used" position
+            cache_setitem(args, result)
+
+            # int is implemented in C, so using a local reference to
+            # maxsize.__lt__ doesn't help performance.
+            # OrderedDict is implemented in C in Python 3, but not in
+            # Python 2, so cache.__len__ does help.
+            if cache_len() > maxsize:
+                # Remove the first, "least recently used" item
+                cache_popitem(last=False)
+
+            return result
+
+        wrapper.cache_clear = cache.clear
+        return wrapper
+    return decorator
