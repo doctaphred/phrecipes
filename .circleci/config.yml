@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.2
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "requirements/build.txt" }}
+      - run:
+          name: venv + pip
+          command: |
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -r requirements/build.txt
+      - save_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
+          paths:
+            - "venv"
+      - run:
+          name: lint
+          command: |
+            source venv/bin/activate
+            flake8 *.py
+      - run:
+          name: test
+          command: |
+            source venv/bin/activate
+            python -m doctest *.py
