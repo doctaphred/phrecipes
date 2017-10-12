@@ -78,6 +78,6 @@ class color:
     def __getattr__(self, name):
         return partial(self, name)
 
-    def print(self, modifiers, *args, sep=' ', end='\n', file=None):
-        text = self(modifiers, *args, sep=sep, end=end)
-        print(text, end='', file=file)
+    def print(self, codes, *args, sep=' ', end='\n', file=None, flush=False):
+        text = self(codes, *args, sep=sep, end=end)
+        print(text, end='', file=file, flush=flush)
