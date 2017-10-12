@@ -52,20 +52,20 @@ class color:
 
     reset = template.format(codes['reset'])
 
-    def __call__(self, modifiers, *args, sep=' ', end='', reset=True):
+    def __call__(self, codes, *args, sep=' ', end='', reset=True):
         """Colorize the input, with the same semantics as print().
 
-        `modifiers` may be either an iterable containing keys of
-        self.codes, or an underscore-separated string of them.
+        `codes` may be either an iterable containing keys of self.codes,
+        or an underscore-separated string of them.
 
         If `reset` is True, includes a reset code at the end of the
         text, but before the `end`.
         """
-        if isinstance(modifiers, str):
-            modifiers = modifiers.split('_')
+        if isinstance(codes, str):
+            codes = codes.split('_')
 
-        codes = self.sep.join(self.codes[mod] for mod in modifiers)
-        color_start = self.template.format(codes)
+        fmt = self.sep.join(self.codes[code] for code in codes)
+        color_start = self.template.format(fmt)
 
         if reset:
             color_end = self.reset
