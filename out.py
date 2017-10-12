@@ -53,10 +53,6 @@ class color:
         if isinstance(modifiers, str):
             modifiers = modifiers.split('_')
 
-        if __debug__:
-            for mod in modifiers:
-                assert mod in self.codes, mod
-
         codes = self.sep.join(self.codes[mod] for mod in modifiers)
         color_start = self.template.format(codes)
 
