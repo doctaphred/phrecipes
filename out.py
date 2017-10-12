@@ -2,10 +2,6 @@ from functools import partial
 from io import StringIO
 
 
-def call(callable):
-    return callable()
-
-
 def sprint(*values, sep=' ', end='\n'):
     """Print to a string."""
     with StringIO() as buffer:
@@ -13,8 +9,7 @@ def sprint(*values, sep=' ', end='\n'):
         return buffer.getvalue()
 
 
-@call
-class color:
+class Colorizer:
     """Print stuff with colors.
 
     >>> color.bold.red('ayy')
@@ -115,3 +110,6 @@ class color:
     def print(self, *args, sep=' ', end='\n', file=None, flush=False):
         text = self(*args, sep=sep, end=end)
         print(text, end='', file=file, flush=flush)
+
+
+color = Colorizer()
