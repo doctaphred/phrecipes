@@ -23,8 +23,11 @@ class color:
     codes = {
         'reset': '0',
         'bold': '1',
+        'bright': '1',
+        'dim': '2',
         'underline': '4',
         'invert': '7',
+        'normal': '22',
 
         'black': '30',
         'red': '31',
