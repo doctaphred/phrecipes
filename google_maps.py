@@ -13,5 +13,9 @@ def google_maps_link(query):
     'https://www.google.com/maps/search/?api=1&query=CenturyLink+Field'
     >>> google_maps_link('City Hall, New York, NY')
     'https://www.google.com/maps/search/?api=1&query=City+Hall%2C+New+York%2C+NY'
+    >>> google_maps_link('ayy\nlmao')
+    'https://www.google.com/maps/search/?api=1&query=ayy+lmao'
     """
+    # Replace newlines, tabs, etc with a single space
+    query = ' '.join(query.split())
     return base_url + '?' + urlencode({'api': 1, 'query': query})
