@@ -366,7 +366,7 @@ def instance_cached(cls=..., *, cache=cache):
         >>> Test(None)
         Traceback (most recent call last):
           ...
-        TypeError: object.__new__() takes no arguments
+        TypeError: object.__new__() takes exactly one argument (the type to instantiate)
 
         >>> @instance_cached
         ... class Test:
@@ -400,7 +400,7 @@ def instance_cached(cls=..., *, cache=cache):
           ...
         TypeError: __init__() missing 1 required positional argument: 'meh'
 
-    """
+    """  # noqa: E501 line too long
     # This construct allows the user to either call this decorator with
     # optional keyword args, or just apply it directly to a function.
     if cls is ...:
