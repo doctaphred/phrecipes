@@ -9,8 +9,9 @@ def sprint(*values, sep=' ', end='\n'):
 
 
 class Colorizer:
-    """Print stuff with colors.
+    r"""Print stuff with colors.
 
+    >>> color = Colorizer()
     >>> color.bold.red('ayy')
     '\x1b[1;31mayy\x1b[0m'
     """
@@ -109,6 +110,3 @@ class Colorizer:
     def print(self, *args, sep=' ', end='\n', file=None, flush=False):
         text = self(*args, sep=sep, end=end)
         print(text, end='', file=file, flush=flush)
-
-
-color = Colorizer()
