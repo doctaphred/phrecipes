@@ -5,7 +5,7 @@ base_url = 'https://www.google.com/maps/search/'
 
 
 def google_maps_link(query):
-    """Create a valid Google Maps URL for the given search query.
+    r"""Create a valid Google Maps URL for the given search query.
 
     See https://developers.google.com/maps/documentation/urls/guide
 
