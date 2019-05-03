@@ -366,7 +366,7 @@ def instance_cached(cls=..., *, cache=cache):
         >>> Test(None)
         Traceback (most recent call last):
           ...
-        TypeError: object() takes no parameters
+        TypeError: object.__new__() takes no arguments
 
         >>> @instance_cached
         ... class Test:
