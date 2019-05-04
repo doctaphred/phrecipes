@@ -1,4 +1,5 @@
-from functools import wraps
+from functools import partial, wraps
+from inspect import signature
 
 
 def nop(*args, **kwargs):
@@ -90,3 +91,145 @@ def debug(before=None, after=None):
     if not __debug__:
         return passthrough
     return wrap(before, after)
+
+
+def curried(func, *, missing_args_template="{.__name__}() missing "):
+    """Return partials of ``func`` until all required args have been provided.
+
+    >>> @curried
+    ... def cat(a, b, c=3):
+    ...     for arg in (a, b, c):
+    ...         print(arg, end='')
+    ...     print()
+
+    >>> cat(1)(2)
+    123
+    >>> cat(1, 2)
+    123
+    >>> cat(c='c')(1)(2)
+    12c
+    >>> cat(1, 2, 'c')
+    12c
+    >>> cat(1)(2, 'c')
+    12c
+    >>> cat(b='b', c='c')(1)
+    1bc
+    >>> cat(b='b')(1)
+    1b3
+    >>> cat(c=4)(1, 2)
+    124
+
+    >>> cat(1)(2, 3, 4)
+    Traceback (most recent call last):
+      ...
+    TypeError: cat() takes from 2 to 3 positional arguments but 4 were given
+    """
+    wrap = wraps(func)
+    missing_args_message = missing_args_template.format(func)
+
+    @wrap
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except TypeError as exc:
+            if exc.__traceback__.tb_next is None:
+                # The exception came from our call, not the function.
+                if str(exc).startswith(missing_args_message):
+                    return wrap(partial(wrapper, *args, **kwargs))
+            # The exception either came from within the function, or
+            # represents too many arguments.
+            raise
+    return wrapper
+
+
+def somewhat_more_respectably_curried(func):
+    """Return partials of ``func`` until all args have been provided.
+
+    >>> @somewhat_more_respectably_curried
+    ... def cat(a, b, c=3):
+    ...     for arg in (a, b, c):
+    ...         print(arg, end='')
+    ...     print()
+
+    >>> cat(1)(2)
+    123
+    >>> cat(1, 2)
+    123
+    >>> cat(1, 2, 'c')
+    12c
+    >>> cat(1)(2, 'c')
+    12c
+    >>> cat(b='b', c='c')(1)
+    1bc
+    >>> cat(b='b')(1)
+    1b3
+    >>> cat(c=4)(1, 2)
+    124
+
+    >>> cat(1)(2, 3, 4)
+    Traceback (most recent call last):
+      ...
+    TypeError: too many positional arguments
+    """
+    bind = signature(func).bind
+    wrap = wraps(func)
+
+    @wrap
+    def wrapper(*args, **kwargs):
+        try:
+            bind(*args, **kwargs)
+        except TypeError as exc:
+            if str(exc).startswith('missing'):
+                return wrap(partial(wrapper, *args, **kwargs))
+            else:
+                raise
+        return func(*args, **kwargs)
+    return wrapper
+
+
+@curried
+def inc_by(n, x):
+    return x + n
+
+
+@curried
+def dec_by(n, x):
+    return x - n
+
+
+inc = inc_by(1)
+dec = dec_by(1)
+
+
+def compose(*funcs):
+    """Define a function as a chained application of other functions.
+
+    Functions are applied from right to left.
+
+    >>> def show(x):
+    ...    print(x)
+    ...    return x
+
+    >>> x = compose(show, dec, show, inc, show)(1)
+    1
+    2
+    1
+    >>> x
+    1
+
+    >>> o = object()
+    >>> compose(passthrough)(o) is o
+    True
+    >>> compose(passthrough) is passthrough
+    True
+    """
+    *rest, first = funcs
+    if not rest:
+        return first
+
+    def composed(*args, **kwargs):
+        value = first(*args, **kwargs)
+        for func in reversed(rest):
+            value = func(value)
+        return value
+    return composed
