@@ -19,3 +19,23 @@ def patch(obj, *delattrs, **setattrs):
                 delattr(obj, name)
             else:
                 setattr(obj, name, value)
+
+
+@contextmanager
+def handle(handlers):
+    """Handle the specified exceptions with the given functions.
+
+    >>> with handle({Exception: print}):
+    ...     raise Exception('ayy')
+    ayy
+
+    >>> with handle({ValueError: print}):
+    ...     raise Exception('nope')
+    Traceback (most recent call last):
+      ...
+    Exception: nope
+    """
+    try:
+        yield
+    except tuple(handlers) as exc:
+        handlers[type(exc)](exc)
