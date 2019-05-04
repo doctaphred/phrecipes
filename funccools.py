@@ -10,13 +10,13 @@ def generate(x):
     yield x
 
 
-def call(*args, **kwargs):
-    def decorator(callable):
+def call_with(*args, **kwargs):
+    def decorator(callable, *, args=args, kwargs=kwargs):
         return callable(*args, **kwargs)
     return decorator
 
 
-magic = call()
+call = call_with()
 
 
 def combine(*funcs):
