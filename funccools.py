@@ -1,3 +1,6 @@
+from functools import wraps
+
+
 def nop(*args, **kwargs):
     pass
 
@@ -60,6 +63,7 @@ only_when.csvoss_edition = lambda condition: (
 def wrap(before=None, after=None, ex=None):
     """Apply additional functions before and afterward."""
     def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
 
             mutable_args = list(args)
@@ -69,12 +73,12 @@ def wrap(before=None, after=None, ex=None):
                 result = func(*mutable_args, **kwargs)
             except Exception as exception:
                 if ex:
-                    return ex(exception, args, kwargs)
+                    return ex(exception, mutable_args, kwargs)
                 else:
                     raise
             else:
                 if after:
-                    result = after(result, args, kwargs)
+                    result = after(result, mutable_args, kwargs)
             return result
 
         return wrapper
