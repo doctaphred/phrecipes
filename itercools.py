@@ -5,10 +5,11 @@ for more cool recipes!
 See also the toolz project for more cool functional programming helpers:
 https://github.com/pytoolz/toolz
 """
-from collections import defaultdict
+import operator as op
+from collections import defaultdict, deque
 from collections.abc import Iterator
 from functools import lru_cache, partial, wraps
-from itertools import chain, filterfalse, tee
+from itertools import chain, filterfalse, islice, tee
 
 
 def filters(iterable, *predicates):
@@ -222,6 +223,124 @@ class Peekable(Iterator):
 
     def __bool__(self):
         return not self.__empty
+
+
+def last(iterator):
+    """Consume an iterator and return the last element.
+
+    >>> it = iter(range(10))
+    >>> last(it)
+    9
+
+    >>> last(it)
+    Traceback (most recent call last):
+      ...
+    StopIteration
+    """
+    q = deque(iterator, maxlen=1)
+    try:
+        return q[0]
+    except IndexError:
+        raise StopIteration
+
+
+def tail(n, iterator):
+    """Consume an iterator and return the last n element(s) as a deque.
+
+    >>> it = iter(range(10))
+    >>> tail(2, it)
+    deque([8, 9], maxlen=2)
+    >>> tail(1, it)
+    deque([], maxlen=1)
+    """
+    return deque(iterator, maxlen=n)
+
+
+def advance(n, iterator):
+    """Consume and discard the next n element(s) of the iterator.
+
+    >>> it = (print(i) for i in range(3))
+    >>> advance(2, it)
+    0
+    1
+    >>> advance(1, it)
+    2
+    >>> advance(1, it)
+    Traceback (most recent call last):
+      ...
+    StopIteration
+    """
+    if not deque(islice(iterator, n), maxlen=1):
+        raise StopIteration
+
+
+def exhaust(iterator):
+    """Call next on an iterator until it stops.
+
+    >>> it = (print(i) for i in range(2))
+    >>> exhaust(it)
+    0
+    1
+    >>> exhaust(it)
+    """
+    deque(iterator, maxlen=0)
+
+
+def check(func, seq, *, allow_empty=False):
+    """Wrap a sequence, raising ValueError if the function fails."""
+    for i, item in enumerate(seq):
+        if not func(item):
+            raise ValueError(f"{item!r} at position {i}")
+        yield item
+
+
+def check_cmp(cmp, seq, *, allow_empty=False):
+    """Wrap a sequence, raising ValueError if the comparison fails.
+
+    >>> list(check_cmp(op.lt, [1, 2]))
+    [1, 2]
+    >>> list(check_cmp(op.le, [1, 1]))
+    [1, 1]
+    >>> list(check_cmp(op.lt, [1, 1]))
+    Traceback (most recent call last):
+      ...
+    ValueError: 1 followed by 1 at position 1
+
+    >>> list(check_cmp(op.lt, []))
+    Traceback (most recent call last):
+      ...
+    ValueError: empty sequence
+    >>> list(check_cmp(op.lt, [], allow_empty=True))
+    []
+    """
+    it = iter(seq)
+    try:
+        prev = next(it)
+    except StopIteration:
+        if allow_empty:
+            return
+        else:
+            raise ValueError("empty sequence")
+
+    yield prev
+
+    for i, item in enumerate(it, start=1):
+        if not cmp(prev, item):
+            raise ValueError(
+                f"{prev!r} followed by {item!r} at position {i}"
+            )
+        prev = item
+        yield item
+
+
+ensure_monotonic_increasing = partial(check_cmp, op.le)
+ensure_strict_monotonic_increasing = partial(check_cmp, op.lt)
+ensure_monotonic_decreasing = partial(check_cmp, op.ge)
+ensure_strict_monotonic_decreasing = partial(check_cmp, op.gt)
+
+
+def check_monotonic_increasing(*args, **kwargs):
+    return exhaust(check_cmp(*args, **kwargs))
 
 
 if __name__ == '__main__':
