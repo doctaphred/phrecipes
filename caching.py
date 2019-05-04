@@ -363,10 +363,10 @@ def instance_cached(cls=..., *, cache=cache):
         'object.__new__'
         >>> Test.__init__.__qualname__
         'object.__init__'
-        >>> Test(None)
+        >>> Test(None)  # doctest: +ELLIPSIS
         Traceback (most recent call last):
           ...
-        TypeError: object.__new__() takes exactly one argument (the type to instantiate)
+        TypeError: ...
 
         >>> @instance_cached
         ... class Test:
