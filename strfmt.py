@@ -85,7 +85,7 @@ def vars_repr(obj, var_names=None, var_filter=None):
     'Thing(a=1)'
     """
     repr_vars = subdict(vars(obj), keys=var_names, item_filter=var_filter)
-    return '{}({})'.format(obj.__class__.__name__, argstr(**repr_vars))
+    return callstr(obj, **repr_vars)
 
 
 def attr_repr(obj, attr_names=None):
@@ -112,7 +112,7 @@ def attr_repr(obj, attr_names=None):
     if attr_names is None:
         attr_names = [name for name in dir(obj) if not name.startswith('_')]
     attrs = {name: getattr(obj, name) for name in attr_names}
-    return '{}({})'.format(obj.__class__.__name__, argstr(**attrs))
+    return callstr(obj, **attrs)
 
 
 def argstr(*args, **kwargs):
@@ -121,37 +121,51 @@ def argstr(*args, **kwargs):
     Lists kwargs in sorted order.
 
     >>> argstr(1, 2, 3)
-    '1, 2, 3'
+    '(1, 2, 3)'
     >>> argstr()
-    ''
+    '()'
     >>> argstr(a=1)
-    'a=1'
+    '(a=1)'
     >>> argstr(1, 2, c=3)
-    '1, 2, c=3'
+    '(1, 2, c=3)'
     >>> argstr(a=1, c=3, b=2)
-    'a=1, b=2, c=3'
+    '(a=1, b=2, c=3)'
     """
     if not args and not kwargs:
-        return ''
+        return '()'
 
     args_str = ', '.join(repr(arg) for arg in args)
     kwargs_str = ', '.join('{}={!r}'.format(k, v)
                            for k, v in sorted(kwargs.items()))
 
     if not args:
-        return kwargs_str
+        return f'({kwargs_str})'
     if not kwargs:
-        return args_str
-    return '{}, {}'.format(args_str, kwargs_str)
+        return f'({args_str})'
+    return f'({args_str}, {kwargs_str})'
 
 
-def callstr(obj, *args, **kwargs):
+def callstr(*args, **kwargs):
     """Return a string representation of a call to the given object.
 
-    >>> callstr('ayy', 'lm', a='o')
+    >>> def ayy(): pass
+    >>> callstr(ayy, 'lm', a='o')
+    "ayy('lm', a='o')"
+
+    >>> class ayy: pass
+    >>> callstr(ayy, 'lm', a='o')
+    "ayy('lm', a='o')"
+
+    >>> class ayy: pass
+    >>> callstr(ayy(), 'lm', a='o')
     "ayy('lm', a='o')"
     """
-    return '{}({})'.format(obj, argstr(*args, **kwargs))
+    first, *rest = args
+    try:
+        name = first.__name__
+    except AttributeError:
+        name = first.__class__.__name__
+    return name + argstr(*rest, **kwargs)
 
 
 def count(items, singular, plural=None, zero=None, *, suffix='s'):
