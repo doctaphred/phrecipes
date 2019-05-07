@@ -286,6 +286,18 @@ def exhaust(iterator):
     deque(iterator, maxlen=0)
 
 
+def genlen(iterator):
+    """Exhaust the iterator and return the number of values yielded.
+
+    >>> it = iter(range(10))
+    >>> genlen(it)
+    10
+    >>> genlen(it)
+    0
+    """
+    return sum(1 for _ in iterator)
+
+
 def check(func, seq, *, allow_empty=False):
     """Wrap a sequence, raising ValueError if the function fails."""
     for i, item in enumerate(seq):
