@@ -23,6 +23,40 @@ def call_with(*args, **kwargs):
 call = call_with()
 
 
+def call_until(exc, func):
+    """Call and yield ``func`` until ``exc`` is raised.
+
+    ``exc`` may be an exception type, or a tuple thereof.
+
+    >>> list(call_until(StopIteration, iter(range(3)).__next__))
+    [0, 1, 2]
+    """
+    try:
+        while True:
+            yield func()
+    except exc:
+        return
+
+
+def yield_until(exc, it):
+    """
+    >>> @print
+    ... @list
+    ... @partial(yield_until, ZeroDivisionError)
+    ... @call
+    ... def _():
+    ...     yield 'ayy'
+    ...     yield 'lmao'
+    ...     yield 1/0
+    ...     yield 'oh no'
+    ['ayy', 'lmao']
+    """
+    try:
+        yield from it
+    except exc:
+        return
+
+
 def combine(*funcs):
     def multifunc(*args, **kwargs):
         return [func(*args, **kwargs) for func in funcs]
@@ -59,6 +93,54 @@ only_when.csvoss_edition = lambda condition: (
     if condition else
     (lambda decorator: lambda function: function)
 )
+
+
+# def fallback(handlers):
+#     """Recover from the specified exceptions with the given functions.
+
+#     >>> from ast import literal_eval
+
+
+#     >>> @fallback({ValueError: passthrough})
+#     ... def parse(x):
+#     ...     return literal_eval(x)
+#     >>> parse('None')
+#     >>> parse('1')
+#     1
+#     >>> parse('ayy')
+#     'ayy'
+
+#     # >>> @fallback({ZeroDivisionError: complex})
+#     # ... def divide(p, q):
+#     # ...     return p / q
+#     # >>> divide(1, 2)
+#     # 0.5
+#     # >>> divide(1, 0)
+#     # 1+0j
+
+#     >>> @fallback({Exception: print})
+#     ... def ayy():
+#     ...     raise Exception('lmao')
+#     >>> ayy()
+#     lmao
+
+#     >>> @fallback({ValueError: print})
+#     ... def ayy():
+#     ...     raise Exception('nope')
+#     >>> ayy()
+#     Traceback (most recent call last):
+#       ...
+#     Exception: nope
+#     """
+#     def decorator(func):
+#         @wraps(func)
+#         def wrapper(*args, **kwargs):
+#             try:
+#                 func(*args, **kwargs)
+#             except tuple(handlers) as exc:
+#                 return handlers[type(exc)](*args, **kwargs)
+#         return wrapper
+#     return decorator
 
 
 def wrap(before=None, after=None, ex=None):
