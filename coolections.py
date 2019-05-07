@@ -4,6 +4,36 @@ from itertools import chain
 from itercools import unique
 
 
+class DynamicDefaultDict(dict):
+    """Like a defaultdict, but passes the missing key to its factory function.
+
+    >>> ddd = DynamicDefaultDict([0].__mul__)
+    >>> ddd
+    DynamicDefaultDict(__mul__, {})
+
+    >>> ddd[0]
+    []
+    >>> ddd
+    DynamicDefaultDict(__mul__, {0: []})
+
+    >>> ddd[1][0] += 1
+    >>> ddd
+    DynamicDefaultDict(__mul__, {0: [], 1: [1]})
+    """
+
+    def __init__(self, factory, *args, **kwargs):
+        self.factory = factory
+        super().__init__(*args, **kwargs)
+
+    def __missing__(self, key):
+        self[key] = result = self.factory(key)
+        return result
+
+    def __repr__(self):
+        s = super().__repr__()
+        return f"{self.__class__.__name__}({self.factory.__name__}, {s})"
+
+
 def all_eq(objs):
     """Check if all elements of objs compare equal.
 
