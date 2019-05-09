@@ -280,3 +280,36 @@ def call_until(exc, func):
             yield func()
     except exc:
         return
+
+
+@curried
+def do_until(exc, action, default=None):
+    """Call ``action`` repeatedly until ``exc`` is raised.
+
+    ``exc`` may be an exception type, or a tuple thereof.
+
+    Returns the last value returned by ``action``, or ``default`` if
+    ``action`` raises on its first call.
+
+    Usage example:
+
+        >>> @do_until(StopIteration)
+        ... def last(it=iter(range(3))):
+        ...     return show(next(it))
+        0
+        1
+        2
+        >>> last
+        2
+
+        >>> @do_until(ZeroDivisionError, default='lmao')
+        ... def ayy():
+        ...     return 1/0
+        >>> ayy
+        'lmao'
+    """
+    try:
+        while True:
+            default = action()
+    except exc:
+        return default
