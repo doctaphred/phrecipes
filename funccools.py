@@ -14,13 +14,14 @@ def generate(x):
     yield x
 
 
+def call(obj):
+    """Call an object with no arguments."""
+    return obj()
+
+
 def call_with(*args, **kwargs):
-    def decorator(callable, *, args=args, kwargs=kwargs):
-        return callable(*args, **kwargs)
-    return decorator
-
-
-call = call_with()
+    """Call a decorated object with the given arguments."""
+    return lambda obj: obj(*args, **kwargs)
 
 
 def combine(*funcs):
