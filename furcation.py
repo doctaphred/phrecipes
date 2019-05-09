@@ -49,8 +49,8 @@ def nfurcate(predicate, iterable, *, n):
     """Split an iterable into n groups on a predicate which returns an index.
 
     Returns a tuple of iterators. The items yielded from the iterator at
-    each index are the elements of ``iterable`` whose predicate returned
-    that index.
+    each index are the elements of ``iterable`` for which the predicate
+    returns that index.
 
         >>> upper, lower = nfurcate(str.islower, 'aYy LmAo', n=2)
         >>> ''.join(upper)
