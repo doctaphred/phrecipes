@@ -38,25 +38,6 @@ def call_until(exc, func):
         return
 
 
-def yield_until(exc, it):
-    """
-    >>> @print
-    ... @list
-    ... @partial(yield_until, ZeroDivisionError)
-    ... @call
-    ... def _():
-    ...     yield 'ayy'
-    ...     yield 'lmao'
-    ...     yield 1/0
-    ...     yield 'oh no'
-    ['ayy', 'lmao']
-    """
-    try:
-        yield from it
-    except exc:
-        return
-
-
 def combine(*funcs):
     def multifunc(*args, **kwargs):
         return [func(*args, **kwargs) for func in funcs]
