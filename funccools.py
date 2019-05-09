@@ -95,54 +95,6 @@ only_when.csvoss_edition = lambda condition: (
 )
 
 
-# def fallback(handlers):
-#     """Recover from the specified exceptions with the given functions.
-
-#     >>> from ast import literal_eval
-
-
-#     >>> @fallback({ValueError: passthrough})
-#     ... def parse(x):
-#     ...     return literal_eval(x)
-#     >>> parse('None')
-#     >>> parse('1')
-#     1
-#     >>> parse('ayy')
-#     'ayy'
-
-#     # >>> @fallback({ZeroDivisionError: complex})
-#     # ... def divide(p, q):
-#     # ...     return p / q
-#     # >>> divide(1, 2)
-#     # 0.5
-#     # >>> divide(1, 0)
-#     # 1+0j
-
-#     >>> @fallback({Exception: print})
-#     ... def ayy():
-#     ...     raise Exception('lmao')
-#     >>> ayy()
-#     lmao
-
-#     >>> @fallback({ValueError: print})
-#     ... def ayy():
-#     ...     raise Exception('nope')
-#     >>> ayy()
-#     Traceback (most recent call last):
-#       ...
-#     Exception: nope
-#     """
-#     def decorator(func):
-#         @wraps(func)
-#         def wrapper(*args, **kwargs):
-#             try:
-#                 func(*args, **kwargs)
-#             except tuple(handlers) as exc:
-#                 return handlers[type(exc)](*args, **kwargs)
-#         return wrapper
-#     return decorator
-
-
 def wrap(before=None, after=None, ex=None):
     """Apply additional functions before and afterward."""
     def decorator(func):
