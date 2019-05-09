@@ -47,10 +47,10 @@ def raises(*allowed, base=Exception, otherwise=None):
           ...
         ZeroDivisionError: division by zero
 
-        >>> import sys; f(sys.float_info.max)
+        >>> import sys; f(sys.float_info.max)  # doctest: +ELLIPSIS
         Traceback (most recent call last):
           ...
-        OverflowError: (34, 'Result too large')
+        OverflowError: (...)
 
     Others are converted into (mostly) uncatchable types:
 
