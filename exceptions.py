@@ -1,6 +1,10 @@
 from functools import wraps
 
 
+def raise_(exc):
+    raise exc
+
+
 def unique_exception(name):
     """Create a unique subclass of BaseException.
 
