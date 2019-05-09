@@ -229,6 +229,27 @@ def somewhat_more_respectably_curried(func):
     return wrapper
 
 
+def tee(*funcs):
+    """
+    >>> noted = []
+    >>> note = tee(print, noted.append)
+    >>> print(note('ayy'), note('lmao'))
+    ayy
+    lmao
+    ayy lmao
+    >>> noted
+    ['ayy', 'lmao']
+    """
+    def teed(obj):
+        for func in funcs:
+            func(obj)
+        return obj
+    return teed
+
+
+show = tee(print)
+
+
 @curried
 def inc_by(n, x):
     return x + n
@@ -247,10 +268,6 @@ def compose(*funcs):
     """Define a function as a chained application of other functions.
 
     Functions are applied from right to left.
-
-    >>> def show(x):
-    ...    print(x)
-    ...    return x
 
     >>> x = compose(show, dec, show, inc, show)(1)
     1
