@@ -23,21 +23,6 @@ def call_with(*args, **kwargs):
 call = call_with()
 
 
-def call_until(exc, func):
-    """Call and yield ``func`` until ``exc`` is raised.
-
-    ``exc`` may be an exception type, or a tuple thereof.
-
-    >>> list(call_until(StopIteration, iter(range(3)).__next__))
-    [0, 1, 2]
-    """
-    try:
-        while True:
-            yield func()
-    except exc:
-        return
-
-
 def combine(*funcs):
     def multifunc(*args, **kwargs):
         return [func(*args, **kwargs) for func in funcs]
@@ -273,3 +258,25 @@ def compose(*funcs):
             value = func(value)
         return value
     return composed
+
+
+@curried
+def call_until(exc, func):
+    """Call and yield ``func`` repeatedly until ``exc`` is raised.
+
+    ``exc`` may be an exception type, or a tuple thereof.
+
+    Usage example:
+
+        >>> @list
+        ... @call_until(StopIteration)
+        ... def L(it=iter(range(3))):
+        ...     return next(it)
+        >>> L
+        [0, 1, 2]
+    """
+    try:
+        while True:
+            yield func()
+    except exc:
+        return
