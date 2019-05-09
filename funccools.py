@@ -2,11 +2,11 @@ from functools import partial, wraps
 from inspect import signature
 
 
-def nop(*args, **kwargs):
+def discard(*args, **kwargs):
     pass
 
 
-def passthrough(x):
+def nop(x):
     return x
 
 
@@ -90,7 +90,7 @@ def wrap(before=None, after=None, ex=None):
 def debug(before=None, after=None):
     """Apply additional functions, unless compiled with -O."""
     if not __debug__:
-        return passthrough
+        return nop
     return wrap(before, after)
 
 
@@ -144,6 +144,7 @@ def curried(func, *, missing_args_template="{.__name__}() missing "):
                 # The exception came from our call, not within `func`.
                 if str(exc).startswith(missing_args_message):
                     # We don't have enough arguments to call `func` yet.
+                    # TODO: Does this blow up the stack?
                     return wrap(partial(wrapper, *args, **kwargs))
             # The exception either came from within `func`, or we called
             # it with too many arguments. Let the caller handle it.
@@ -244,9 +245,9 @@ def compose(*funcs):
     1
 
     >>> o = object()
-    >>> compose(passthrough)(o) is o
+    >>> compose(nop)(o) is o
     True
-    >>> compose(passthrough) is passthrough
+    >>> compose(nop) is nop
     True
     """
     *rest, first = funcs
