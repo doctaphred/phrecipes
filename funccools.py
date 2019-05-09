@@ -214,12 +214,20 @@ def curried(func, *, missing_args_template="{.__name__}() missing "):
         try:
             return func(*args, **kwargs)
         except TypeError as exc:
+            # The interpreter may have raised this TypeError because we
+            # called `func` with an invalid signature, but it could also
+            # have come from within `func`.
+            #
+            # In the latter case, the `tb_next` attribute of the
+            # exception's traceback will have information for the stack
+            # frame of that call; otherwise, it will be None.
             if exc.__traceback__.tb_next is None:
-                # The exception came from our call, not the function.
+                # The exception came from our call, not within `func`.
                 if str(exc).startswith(missing_args_message):
+                    # We don't have enough arguments to call `func` yet.
                     return wrap(partial(wrapper, *args, **kwargs))
-            # The exception either came from within the function, or
-            # represents too many arguments.
+            # The exception either came from within `func`, or we called
+            # it with too many arguments. Let the caller handle it.
             raise
     return wrapper
 
