@@ -21,10 +21,13 @@ class DynamicDefaultDict(dict):
     DynamicDefaultDict(__mul__, {0: [], 1: [1]})
 
     >>> @DynamicDefaultDict
-    ... def double(n):
-    ...     return n * 2
-    >>> double[1]
-    2
+    ... def fibs(n):
+    ...     return fibs[n - 1] + fibs[n - 2]
+    >>> fibs[0], fibs[1] = 1, 1
+    >>> fibs[10]
+    89
+    >>> fibs.values()
+    dict_values([1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89])
     """
 
     def __init__(self, factory, *args, **kwargs):
