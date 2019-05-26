@@ -19,6 +19,12 @@ class DynamicDefaultDict(dict):
     >>> ddd[1][0] += 1
     >>> ddd
     DynamicDefaultDict(__mul__, {0: [], 1: [1]})
+
+    >>> @DynamicDefaultDict
+    ... def double(n):
+    ...     return n * 2
+    >>> double[1]
+    2
     """
 
     def __init__(self, factory, *args, **kwargs):
