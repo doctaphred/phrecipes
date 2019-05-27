@@ -22,9 +22,9 @@ class DynamicDefaultDict(dict):
 
     >>> @DynamicDefaultDict
     ... def fibs(n):
-    ...     return fibs[n - 1] + fibs[n - 2]
+    ...     return fibs(n - 1) + fibs(n - 2)
     >>> fibs[0], fibs[1] = 1, 1
-    >>> fibs[10]
+    >>> fibs(10)
     89
     >>> fibs.values()
     dict_values([1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89])
@@ -41,6 +41,9 @@ class DynamicDefaultDict(dict):
     def __repr__(self):
         s = super().__repr__()
         return f"{self.__class__.__name__}({self.factory.__name__}, {s})"
+
+    # Use it as a decorator!
+    __call__ = dict.__getitem__
 
 
 def all_eq(objs):
