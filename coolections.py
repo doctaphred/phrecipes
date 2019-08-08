@@ -1,5 +1,6 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from itertools import chain
+from weakref import finalize, WeakValueDictionary
 
 from itercools import unique
 
@@ -44,6 +45,100 @@ class DynamicDefaultDict(dict):
 
     # Use it as a decorator!
     __call__ = dict.__getitem__
+
+
+class IdentityDict(MutableMapping):
+    """A dict keyed off of object IDs -- hashability not required.
+
+    >>> d = IdentityDict()
+
+    >>> L = []
+    >>> d[L] = 'lmao'
+    >>> d[L]
+    'lmao'
+    >>> L in d
+    True
+    >>> [] in d
+    False
+
+    >>> L.append('ayy')
+    >>> d[L]
+    'lmao'
+    >>> d[['ayy']]  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+      ...
+    KeyError: "id ... of object ['ayy']"
+
+    >>> list(d.items())
+    [(['ayy'], 'lmao')]
+    """
+
+    def __init__(self, *others, **kwargs):
+        self._keys = {}
+        self._values = {}
+
+        for other in others:
+            self.update(other)
+        self.update(kwargs)
+
+    def update(self, other):
+        if isinstance(other, Mapping):
+            for k in other:
+                self[k] = other[k]
+        else:
+            for k, v in other:
+                self[k] = v
+
+    def __getitem__(self, obj):
+        try:
+            return self._values[id(obj)]
+        except KeyError as exc:
+            raise KeyError(f"id {id(obj)} of object {obj}") from exc
+
+    def __setitem__(self, obj, value):
+        self._keys[id(obj)] = obj
+        self._values[id(obj)] = value
+
+    def __delitem__(self, obj):
+        del self._keys[id(obj)]
+        del self._values[id(obj)]
+
+    def __iter__(self):
+        return iter(self._keys.values())
+
+    def __len__(self):
+        return len(self._values)
+
+    def __repr__(self):
+        contents = ''.join(
+            f"\n    {key!r}: {self[key]!r}"
+            for key in self
+        )
+        if not contents:
+            contents = " <empty>"
+        return f"{self.__class__.__name__}:{contents}"
+
+
+class WeakKeyIdentityDictionary(IdentityDict):
+
+    def __init__(self):
+        self._keys = WeakValueDictionary()
+        self._values = {}
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        finalize(key, lambda: self._values.pop(id(key), None))
+
+
+class WeakValueIdentityDictionary(IdentityDict):
+
+    def __init__(self):
+        self._keys = {}
+        self._values = WeakValueDictionary()
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        finalize(value, lambda: self._keys.pop(id(key), None))
 
 
 def all_eq(objs):
