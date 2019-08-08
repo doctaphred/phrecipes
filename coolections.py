@@ -72,11 +72,13 @@ class IdentityDict(MutableMapping):
     >>> list(d.items())
     [(['ayy'], 'lmao')]
     """
+    _init_keys = dict
+    _init_values = dict
 
-    def __init__(self, *others, **kwargs):
-        self._keys = {}
-        self._values = {}
-
+    def __init__(*others, **kwargs):
+        self, *others = others  # Allow self to be a kwarg.
+        self._keys = self._init_keys()
+        self._values = self._init_values()
         for other in others:
             self.update(other)
         self.update(kwargs)
@@ -120,10 +122,7 @@ class IdentityDict(MutableMapping):
 
 
 class WeakKeyIdentityDictionary(IdentityDict):
-
-    def __init__(self):
-        self._keys = WeakValueDictionary()
-        self._values = {}
+    _init_keys = WeakValueDictionary
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
@@ -131,10 +130,7 @@ class WeakKeyIdentityDictionary(IdentityDict):
 
 
 class WeakValueIdentityDictionary(IdentityDict):
-
-    def __init__(self):
-        self._keys = {}
-        self._values = WeakValueDictionary()
+    _init_values = WeakValueDictionary
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
