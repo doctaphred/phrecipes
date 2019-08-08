@@ -50,16 +50,19 @@ class DynamicDefaultDict(dict):
 class IdentityDict(MutableMapping):
     """A dict keyed off of object IDs -- hashability not required.
 
-    >>> d = IdentityDict()
-
     >>> L = []
-    >>> d[L] = 'lmao'
+    >>> d = IdentityDict([(L, 'lmao')])
+
     >>> d[L]
     'lmao'
     >>> L in d
     True
     >>> [] in d
     False
+    >>> d[[]]  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+      ...
+    KeyError: 'id ... of object []'
 
     >>> L.append('ayy')
     >>> d[L]
@@ -71,6 +74,10 @@ class IdentityDict(MutableMapping):
 
     >>> list(d.items())
     [(['ayy'], 'lmao')]
+
+    >>> d  # doctest: +ELLIPSIS
+    IdentityDict:
+        ... (['ayy']): 'lmao'
     """
     _init_keys = dict
     _init_values = dict
@@ -113,7 +120,7 @@ class IdentityDict(MutableMapping):
 
     def __repr__(self):
         contents = ''.join(
-            f"\n    {key!r}: {self[key]!r}"
+            f"\n    {id(key)} ({key!r}): {self[key]!r}"
             for key in self
         )
         if not contents:
