@@ -197,6 +197,26 @@ def somewhat_more_respectably_curried(func):
     return wrapper
 
 
+def pseudocurried(func):
+    """
+    >>> pseudocurried(print)('ayy')('lmao')()
+    ayy lmao
+    """
+    accumulated_args = []
+    accumulated_kwargs = {}
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if args or kwargs:
+            accumulated_args.extend(args)
+            accumulated_kwargs.update(kwargs)
+            return wrapper
+        else:
+            return func(*accumulated_args, **accumulated_kwargs)
+
+    return wrapper
+
+
 def tee(*funcs):
     """
     >>> noted = []
