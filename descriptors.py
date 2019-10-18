@@ -6,6 +6,10 @@ class lazyattr:
     ...    def ayy(self):
     ...        print('ayy')
     ...        return 'lmao'
+
+    >>> LazyBoy.ayy  # doctest: +ELLIPSIS
+    <descriptors.lazyattr object at ...>
+
     >>> boy = LazyBoy()
     >>> vars(boy)
     {}
@@ -29,6 +33,9 @@ class lazyattr:
         self.name = name
 
     def __get__(self, instance, owner):
+        if instance is None:
+            # Accessed via the class (`owner`), not an instance.
+            return self
         result = self.method(instance)
         setattr(instance, self.name, result)
         return result
