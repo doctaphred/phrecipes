@@ -1,23 +1,25 @@
 class Exposed:
 
     def __init__(self, gen):
-        self.__gen = gen
+        self._gen = gen
 
     def __next__(self):
-        return next(self.__gen)
+        gen = super().__getattribute__('_gen')
+        return next(gen)
 
     def __iter__(self):
         return self
 
     def __getattr__(self, name):
+        gen = super().__getattribute__('_gen')
         try:
-            return self.__gen.gi_frame.f_locals[name]
+            return gen.gi_frame.f_locals[name]
         except KeyError:
             raise AttributeError(name)
 
     def __dir__(self):
-        # yield from super().__dir__()
-        yield from self.__gen.gi_frame.f_locals.keys()
+        gen = super().__getattribute__('_gen')
+        yield from gen.gi_frame.f_locals.keys()
 
 
 def expose(generator):
