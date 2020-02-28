@@ -53,19 +53,6 @@ def csv_rows(lines, headers=None, **csv_reader_kwargs):
         yield dict(zip(headers, row))
 
 
-# def csv_rows_with_progress(path, **kwargs):
-#     """Yield dicts of rows of a csv file, with a progress bar."""
-#     with open(path) as f:
-#         lines = tqdm(f, total=count_lines(f))
-#         reader = csv.reader(lines, **kwargs)
-#         headers = next(reader)
-#         for row in reader:
-#             # Somehow this is substantially faster than csv.DictReader,
-#             # even with the assert.
-#             assert len(row) == len(headers)
-#             yield dict(zip(headers, row))
-
-
 def insert_chunks(table, rows, chunk_size=1000):
     """Insert <rows> into <table>, <chunk_size> at a time."""
     for chunk in chunks(rows, chunk_size=chunk_size):
