@@ -59,7 +59,7 @@ def insert_chunks(table, rows, chunk_size=1000):
         table.insert_many(chunk, chunk_size=chunk_size)
 
 
-def with_file_data(rows, filename):
+def with_file_data(filename, rows):
     """Add the filename and line number to each row."""
     for i, row in enumerate(rows, start=2):
         assert 'filename' not in row
@@ -71,15 +71,6 @@ def with_file_data(rows, filename):
 
 def csv_to_db(db_url, csv_path, table_name):
 
-    db = dataset.connect(db_url)
-    table = db[table_name]
-
-    filename = Path(csv_path).name
-
-    lines = read_lines_with_progress(csv_path)
-    rows = csv_rows(lines, delimiter='|')
-    rows = with_file_data(rows, filename)
-
     # TODO: make (filename, row) the primary key?
 
     # TODO: create separate table for filenames?
@@ -87,6 +78,15 @@ def csv_to_db(db_url, csv_path, table_name):
     # TODO: timestamp rows/files?
 
     # TODO: zipfile support.
+
+    db = dataset.connect(db_url)
+    table = db[table_name]
+
+    lines = read_lines_with_progress(csv_path)
+    rows = with_file_data(
+        filename=Path(csv_path).name,
+        rows=csv_rows(lines, delimiter='|'),
+    )
 
     insert_chunks(table, rows)
 
