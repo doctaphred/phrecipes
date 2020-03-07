@@ -33,7 +33,7 @@ class Env:
     >>> import ast, json
     >>> env = Env({
     ...         'json_config': (json.loads, {}),
-    ...         'python_object': (ast.literal_eval, {}),
+    ...         'python_object': (ast.literal_eval, object()),
     ...         'the_answer': (int, 42),
     ...     },
     ...     prefix='MYAPP_',
@@ -52,15 +52,19 @@ class Env:
     >>> env.the_answer
     420
 
+    >>> del os.environ['MYAPP_PYTHON_OBJECT']
+    >>> env.python_object  # doctest: +ELLIPSIS
+    <object object at ...>
+
     >>> env.nope  # doctest: +ELLIPSIS
     Traceback (most recent call last):
       ...
     AttributeError: 'nope'. Choices are: ['json_config', ...]
 
     >>> from pprint import pprint
-    >>> pprint(dict(env))
+    >>> pprint(dict(env))  # doctest: +ELLIPSIS
     {'json_config': {'ayy': 'lmao'},
-     'python_object': {(b'',): [(1+0j)]},
+     'python_object': <object object at ...>,
      'the_answer': 420}
     """
     __slots__ = ('_prefix', '_expected', '_environ')
