@@ -50,25 +50,123 @@ Different field orders result in different, inequivalent types:
     >>> type(r4) is type(r3)
     False
 
-TODO: instances *could* be cached, but are currently not:
+Instances are cached:
 
     >>> r1 is r2
+    True
+
+Caching is implemented via weakrefs, so instances are destroyed when no
+non-weak references remain:
+
+    >>> id(record(a=1, b=2)) == id(record(a=1, b=2))
     False
 
-(tuple subclasses don't support weakrefs, so this might be tricky:
-https://docs.python.org/3/reference/datamodel.html#notes-on-using-slots)
+    >>> ref = record(a=1, b=2)
+    >>> id(record(a=1, b=2)) == id(record(a=1, b=2))
+    True
+    >>> del ref
+    >>> id(record(a=1, b=2)) == id(record(a=1, b=2))
+    False
+
+Note, however, that implicit references may persist during the
+evaluation of certain expressions:
+
+    >>> record(a=1, b=2) is record(a=1, b=2)
+    True
+
+Derivative records can be created by calling instances:
+
+    >>> r5 = r1(foo='baz')
+    >>> r5
+    record(ayy='lmao', foo='baz')
+
+Caching still applies to new records created this way:
+
+    >>> r5 is r3
+    True
+
+Records have no __dict__, but can easily create one:
+
+    >>> vars(r1)
+    Traceback (most recent call last):
+      ...
+    TypeError: vars() argument must have __dict__ attribute
+
+    >>> dict(r1)
+    {'ayy': 'lmao', 'foo': 'bar'}
 """
+
+
+class VintageRecordStore(dict):
+    """Simpler implementation of records using namedtuples.
+
+    Tuple subclasses, including namedtuples, don't support weakrefs; so
+    records created this way cannot be instance-cached.
+
+    See https://docs.python.org/3/reference/datamodel.html#notes-on-using-slots
+    """
+
+    def __call__(self, **attrs):
+        return self[tuple(attrs)](**attrs)
+
+    def __missing__(self, key):
+        from collections import namedtuple
+        self[key] = cls = namedtuple('record', key)
+        return cls
+
+
+class RecordMeta(type):
+    def __init__(cls, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from weakref import WeakValueDictionary
+        cls._cache = WeakValueDictionary()
+
+    def __call__(cls, **kwargs):
+        key = tuple(kwargs.items())
+        try:
+            return cls._cache[key]
+        except KeyError:
+            instance = cls._cache[key] = super().__call__(**kwargs)
+            return instance
+
+
+class RecordBase(metaclass=RecordMeta):
+    """Auto-cached, slots-based data class.
+
+    Similar to namedtuple, but with less nonsense and weakref support.
+    """
+    __slots__ = ['__weakref__']
+
+    def __init__(self, **attrs):
+        for name, value in attrs.items():
+            setattr(self, name, value)
+
+    def __call__(self, **updates):
+        """Construct a new record based on this instance, with some updates."""
+        return type(self)(**{**dict(self), **updates})  # 😚👌
+
+    def __iter__(self):
+        """Iterate over key-value PAIRS, as G-d intended."""
+        for name in dir(self):
+            if not name.startswith('_'):
+                yield name, getattr(self, name)
+
+    def __repr__(self):
+        return 'record({})'.format(
+            ', '.join(f'{name}={value!r}' for name, value in self)
+        )
+
+    # Instances are cached, so equivalence is just identity!
 
 
 class RecordStore(dict):
 
-    def __call__(self, **fields):
-        return self[tuple(fields)](**fields)
+    def __call__(self, **attrs):
+        return self[tuple(attrs)](**attrs)
 
     def __missing__(self, key):
-        from collections import namedtuple
-        self[key] = result = namedtuple('record', key)
-        return result
+        self[key] = cls = type('record', (RecordBase,), {'__slots__': key})
+        return cls
 
 
 record = RecordStore()
