@@ -249,6 +249,10 @@ class Cached(type):
         if args in self.__cache:
             return self.__cache[args]
         else:
+            # NOTE: the newly created object *must* be bound to a local
+            # variable, not simply added to the cache: otherwise, no
+            # other references to the object will exist, and the
+            # WeakValueDictionary will allow it to be destroyed.
             obj = super().__call__(*args)
             self.__cache[args] = obj
             return obj
