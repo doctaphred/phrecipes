@@ -54,6 +54,9 @@ TODO: instances *could* be cached, but are currently not:
 
     >>> r1 is r2
     False
+
+(tuple subclasses don't support weakrefs, so this might be tricky:
+https://docs.python.org/3/reference/datamodel.html#notes-on-using-slots)
 """
 
 
