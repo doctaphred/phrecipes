@@ -95,6 +95,7 @@ Records have no __dict__, but can easily create one:
     >>> dict(r1)
     {'ayy': 'lmao', 'foo': 'bar'}
 """
+from weakref import WeakValueDictionary
 
 
 class VintageRecordStore(dict):
@@ -116,21 +117,35 @@ class VintageRecordStore(dict):
 
 
 class RecordMeta(type):
-    def __init__(cls, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        from weakref import WeakValueDictionary
-        cls._cache = WeakValueDictionary()
+    """Metaclass which dynamically creates subclasses and caches instances."""
+    _subclasses = WeakValueDictionary()
+    _instances = WeakValueDictionary()
 
     def __call__(cls, **kwargs):
         key = tuple(kwargs.items())
         try:
-            return cls._cache[key]
+            instance = cls._instances[key]
         except KeyError:
-            instance = cls._cache[key] = super().__call__(**kwargs)
-            return instance
+            instance = cls._instances[key] = cls.create_instance(kwargs)
+        return instance
+
+    def get_subclass(cls, fields):
+        try:
+            subclass = cls._subclasses[fields]
+        except KeyError:
+            subclass = cls._subclasses[fields] = cls.create_subclass(fields)
+        return subclass
+
+    def create_instance(cls, kwargs):
+        subclass = cls.get_subclass(tuple(kwargs))
+        subclass_super = super(type(subclass), subclass)
+        return subclass_super.__call__(**kwargs)
+
+    def create_subclass(cls, fields):
+        return type(f"{cls.__name__}_sub", (cls,), {'__slots__': fields})
 
 
-class RecordBase(metaclass=RecordMeta):
+class record(metaclass=RecordMeta):
     """Auto-cached, slots-based data class.
 
     Similar to namedtuple, but with less nonsense and weakref support.
@@ -157,16 +172,3 @@ class RecordBase(metaclass=RecordMeta):
         )
 
     # Instances are cached, so equivalence is just identity!
-
-
-class RecordStore(dict):
-
-    def __call__(self, **attrs):
-        return self[tuple(attrs)](**attrs)
-
-    def __missing__(self, key):
-        self[key] = cls = type('record', (RecordBase,), {'__slots__': key})
-        return cls
-
-
-record = RecordStore()
