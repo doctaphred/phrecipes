@@ -130,6 +130,17 @@ class ez:
     Traceback (most recent call last):
       ...
     TypeError: unexpected attrs: {'nope'}
+
+    >>> class subcls(cls):
+    ...     lmao = 'lmao'
+    >>> subcls()
+    subcls()
+    >>> subcls()(ayy='lmao')
+    subcls(ayy='lmao')
+    >>> subcls()(ayy='lmao')(lmao='ayy')
+    subcls(ayy='lmao', lmao='ayy')
+    >>> subcls(ayy='lmao', lmao='ayy')
+    subcls(ayy='lmao', lmao='ayy')
     """
     __init__ = ezinit
     __call__ = ezclone
