@@ -2,7 +2,7 @@ from types import FunctionType, MethodType
 
 
 def ezrepr(obj):
-    """Create a repr of <obj> based on its vars and class name.
+    """Create a repr of <obj> based on its instance attributes and type.
 
     >>> def func(): pass
     >>> print(ezrepr(func))
@@ -44,17 +44,41 @@ def ezrepr(obj):
     Outer().method
     >>> print(ezrepr(Outer.Inner().method))
     Outer.Inner().method
+
+    >>> class Slotted:
+    ...     __slots__ = ['ayy', 'lmao']
+    ...     __init__ = ezinit
+    ...
+    >>> print(ezrepr(Slotted))
+    Slotted
+    >>> print(ezrepr(Slotted()))
+    Slotted()
+    >>> print(ezrepr(Slotted(ayy='lmao')))
+    Slotted(ayy='lmao')
     """
     if isinstance(obj, (type, FunctionType)):
         return obj.__qualname__
     if isinstance(obj, MethodType):
         return f"{ezrepr(obj.__self__)}.{obj.__name__}"
-    sig = ', '.join(
-        f'{attr}={value!r}'
-        for attr, value in vars(obj).items()
-        if not attr.startswith('_')
-    )
-    return f"{type(obj).__qualname__}({sig})"
+
+    if hasattr(obj, '__dict__'):
+        sig = ', '.join(
+            f'{attr}={value!r}'
+            for attr, value in vars(obj).items()
+            if not attr.startswith('_')
+        )
+        return f"{type(obj).__qualname__}({sig})"
+
+    if hasattr(obj, '__slots__'):
+        sig = ', '.join(
+            f'{attr}={getattr(obj, attr)!r}'
+            for attr in obj.__slots__
+            if not attr.startswith('_')
+            and hasattr(obj, attr)
+        )
+        return f"{type(obj).__qualname__}({sig})"
+
+    return repr(obj)
 
 
 def ezinit(obj, **attrs):
@@ -70,7 +94,8 @@ def ezinit(obj, **attrs):
     unexpected = attrs.keys() - names
     if unexpected:
         raise TypeError(f'unexpected attrs: {unexpected}')
-    vars(obj).update(attrs)
+    for attr, value in attrs.items():
+        setattr(obj, attr, value)
 
 
 def ezclone(obj, **attrs):
