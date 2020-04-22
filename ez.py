@@ -86,12 +86,12 @@ def ezinit(obj, **attrs):
 
     Best used as a class' __init__ method.
     """
-    names = {
-        name for name in dir(type(obj))
-        if not name.startswith('__')
-        and not name.endswith('__')
+    expected = {
+        attr for attr in dir(type(obj))
+        if not attr.startswith('__')
+        and not attr.endswith('__')
     }
-    unexpected = attrs.keys() - names
+    unexpected = attrs.keys() - expected
     if unexpected:
         raise TypeError(f'unexpected attrs: {unexpected}')
     for attr, value in attrs.items():
