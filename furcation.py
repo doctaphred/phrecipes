@@ -52,8 +52,8 @@ def nfurcate(predicate, iterable, *, n):
     each index are the elements of ``iterable`` for which the predicate
     returns that index.
 
-        >>> upper, lower = nfurcate(str.islower, 'aYy LmAo', n=2)
-        >>> ''.join(upper)
+        >>> other, lower = nfurcate(str.islower, 'aYy LmAo', n=2)
+        >>> ''.join(other)
         'Y LA'
         >>> ''.join(lower)
         'aymo'
