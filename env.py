@@ -2,7 +2,7 @@
 import os
 
 
-def getenv(name, *, convert=str, default=None):
+def getenv(name, convert=str, default=None):
     """
     >>> os.environ['JSON_CONFIG'] = '{"ayy": "lmao"}'
     >>> getenv('JSON_CONFIG')
