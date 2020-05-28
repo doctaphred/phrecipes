@@ -298,6 +298,18 @@ def genlen(iterator):
     return sum(1 for _ in iterator)
 
 
+def intersperse(sep, it):
+    """Like str.join for iterators.
+
+    Raises StopIteration if the iterator is initially empty.
+    """
+    it = iter(it)
+    yield next(it)
+    for elem in it:
+        yield sep
+        yield elem
+
+
 def check(func, seq, *, allow_empty=False):
     """Wrap a sequence, raising ValueError if the function fails."""
     for i, item in enumerate(seq):
