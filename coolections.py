@@ -1,6 +1,7 @@
 from collections.abc import Mapping, MutableMapping
 from itertools import chain
 from pathlib import Path
+from subprocess import PIPE, run
 from weakref import finalize, WeakValueDictionary
 
 from itercools import unique
@@ -189,6 +190,29 @@ class DirDict(MutableMapping):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._dir!r})"
+
+
+class BinDirDict(DirDict):
+    """Manage executable files' outputs with a DirDict."""
+
+    def __init__(self, cache_dir, bin_dir):
+        super().__init__(cache_dir)
+        self._bin_dir = Path(bin_dir).resolve()
+
+    def __missing__(self, key):
+        try:
+            value = self.run(key)
+        except FileNotFoundError as exc:
+            raise KeyError(key) from exc
+        self[key] = value
+        return value
+
+    def run(self, key):
+        proc_path = (self._bin_dir / key).resolve()
+        assert self._bin_dir in proc_path.parents
+        result = run(proc_path, stdout=PIPE, text=True)
+        result.check_returncode()
+        return result.stdout
 
 
 def all_eq(objs):
