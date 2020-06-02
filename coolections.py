@@ -1,5 +1,6 @@
 from collections.abc import Mapping, MutableMapping
 from itertools import chain
+from pathlib import Path
 from weakref import finalize, WeakValueDictionary
 
 from itercools import unique
@@ -142,6 +143,52 @@ class WeakValueIdentityDictionary(IdentityDict):
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
         finalize(value, lambda: self._keys.pop(id(key), None))
+
+
+class DirDict(MutableMapping):
+    """A dict backed by a directory of files."""
+    # TODO: Handle additional error conditions.
+
+    def __init__(self, path):
+        self._dir = Path(path).resolve()
+
+    def __getitem__(self, key):
+        try:
+            return self.path(key).read_text()
+        except FileNotFoundError:
+            return self.__missing__(key)
+
+    def __missing__(self, key):
+        raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        self._dir.mkdir(parents=True, exist_ok=True)
+        self.path(key).write_text(value)
+
+    def __delitem__(self, key):
+        try:
+            self.path(key).unlink()
+        except FileNotFoundError as exc:
+            raise KeyError(key) from exc
+
+    def __contains__(self, key):
+        return self.path(key).exists()
+
+    def __iter__(self):
+        return self._dir.iterdir()
+
+    def __len__(self):
+        return sum(1 for _ in self)
+
+    def path(self, key=None):
+        if key is None:
+            return self._dir
+        path = (self._dir / key).resolve()
+        assert self._dir in path.parents
+        return path
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._dir!r})"
 
 
 def all_eq(objs):
