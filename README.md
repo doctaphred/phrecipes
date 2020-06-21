@@ -6,7 +6,7 @@ This repository is my personal collection of Python recipes: small units of code
 
 These recipes are meant to be minimal and self-contained, and so they are not pip-installable: just copy/paste them into your project's utilities module.
 
-All tests are currently implemented via [doctest]()<a id="text2" href="#note2"><sup>[2]</sup></a>: run them with `python3 -m doctest -o ELLIPSIS <paths>`; add `--verbose` to confirm which tests are run. (The `-o ELLIPSIS` option is required, to avoid repeating `# doctest: +ELLIPSIS` ad nauseam in the tests themselves.) Consider pytest's [doctest integration]() to include them in a production test suite.
+All tests are currently implemented via [doctest][]<a id="text2" href="#note2"><sup>[2]</sup></a>: run them with `python3 -m doctest -o ELLIPSIS <paths>`; add `--verbose` to confirm which tests are run. (The `-o ELLIPSIS` option is required, to avoid repeating `# doctest: +ELLIPSIS` ad nauseam in the tests themselves.) Consider pytest's [doctest integration][] to include them in a production test suite.
 
 [doctest]: https://docs.python.org/3/library/doctest.html
 [doctest integration]: https://docs.pytest.org/en/stable/doctest.html
