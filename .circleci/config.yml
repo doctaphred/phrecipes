@@ -21,9 +21,9 @@ jobs:
           name: lint
           command: |
             source venv/bin/activate
-            flake8 *.py
+            ./lint
       - run:
           name: test
           command: |
             source venv/bin/activate
-            python -m doctest *.py
+            ./test
