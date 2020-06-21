@@ -46,7 +46,7 @@ def slotted(*names, **defaults):
     >>> vars(c)
     Traceback (most recent call last):
       ...
-    TypeError: vars() argument must have __dict__ attribute
+    TypeError: ...
 
     >>> C.x
     <member 'x' of 'C' objects>
