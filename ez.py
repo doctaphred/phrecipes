@@ -141,7 +141,37 @@ class ez:
     subcls(ayy='lmao', lmao='ayy')
     >>> subcls(ayy='lmao', lmao='ayy')
     subcls(ayy='lmao', lmao='ayy')
+
+    Now featuring `.print()`!
+
+    >>> obj.print()
+    cls: <empty>
+
+    >>> obj2.print()
+    cls:
+      ayy='lmao'
+
+    >>> subcls(ayy='lmao', lmao='ayy').print()
+    subcls:
+      ayy='lmao'
+      lmao='ayy'
     """
     __init__ = ezinit
     __call__ = ezclone
     __repr__ = ezrepr
+
+    def attrs(self):
+        for name, value in vars(self).items():
+            if not name.startswith('_'):
+                yield name, value
+
+    def pretty(self, *, indent='  ', empty='<empty>'):
+        name = type(self).__name__
+        attrs = dict(self.attrs())
+        if not attrs:
+            return f"{name}: {empty}"
+        lines = [f"{indent}{name}={attrs[name]!r}" for name in sorted(attrs)]
+        return f"{name}:\n" + '\n'.join(lines)
+
+    def print(self, *args, **kwargs):
+        print(self.pretty(), *args, **kwargs)
