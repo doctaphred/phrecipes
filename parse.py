@@ -156,6 +156,9 @@ class QuoteSplitter:
     >>> show(r'"\"ayy\" \"lmao\""')
     '"ayy" "lmao"'
 
+    >>> show(r'"\\"')
+    '\\'
+
     >>> show('ayy "lmao')
     Traceback (most recent call last):
       ...
@@ -206,9 +209,12 @@ class QuoteSplitter:
         raise Exception("unmatched quote")
 
     def escape(self, char):
-        if char != self.scanner.quote:
+        if char == self.scanner.escape:
+            return char
+        elif char == self.scanner.quote:
+            return char
+        else:
             raise Exception(f"invalid escape character {char!r}")
-        return char
 
     @classmethod
     def show(cls, text, **kwargs):
