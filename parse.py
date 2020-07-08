@@ -133,35 +133,44 @@ class QuoteScanner:
 class QuoteSplitter:
     r"""Split text on on a delimiter character, observing quotes and escapes.
 
-    >>> list(QuoteSplitter('ayy lmao'))
-    ['ayy', 'lmao']
+    >>> show = QuoteSplitter.show
 
-    >>> list(QuoteSplitter(' ayy lmao '))
-    ['ayy', 'lmao']
+    >>> show('ayy lmao')
+    'ayy'
+    'lmao'
 
-    >>> list(QuoteSplitter('"ayy" "lmao"'))
-    ['ayy', 'lmao']
+    >>> show(' ayy lmao ')
+    'ayy'
+    'lmao'
 
-    >>> list(QuoteSplitter('"ayy lmao"'))
-    ['ayy lmao']
+    >>> show('"ayy" "lmao"')
+    'ayy'
+    'lmao'
 
-    >>> list(QuoteSplitter(r'"\"ayy\" \"lmao\""'))
-    ['"ayy" "lmao"']
+    >>> show('"ayy lmao"')
+    'ayy lmao'
 
-    >>> list(QuoteSplitter('ayy "lmao'))
+    >>> show(r'"\"ayy\" \"lmao\""')
+    '"ayy" "lmao"'
+
+    >>> show(r'"\"ayy\" \"lmao\""')
+    '"ayy" "lmao"'
+
+    >>> show('ayy "lmao')
     Traceback (most recent call last):
       ...
     Exception: unmatched quote
 
-    >>> list(QuoteSplitter('ayy\ lmao'))
+    >>> show('ayy\ lmao')
     Traceback (most recent call last):
       ...
     Exception: unquoted escape sequence
 
-    >>> list(QuoteSplitter('"ayy\ lmao"'))
+    >>> show('"ayy\ lmao"')
     Traceback (most recent call last):
       ...
     Exception: invalid escape character ' '
+
     """
     Scanner = QuoteScanner
 
@@ -200,3 +209,9 @@ class QuoteSplitter:
         if char != self.scanner.quote:
             raise Exception(f"invalid escape character {char!r}")
         return char
+
+    @classmethod
+    def show(cls, text, **kwargs):
+        self = cls(text, **kwargs)
+        for item in self:
+            print(repr(item))
