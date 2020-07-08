@@ -65,3 +65,62 @@ def trim_lines(text, *,
     scanner = pattern.scanner(text)
     for match in iter(scanner.search, None):
         yield match.groups()
+
+
+class QuoteScanner:
+    r"""Tokenizer for QuoteSplitter.
+
+    >>> scan = QuoteScanner().show
+
+    >>> scan('ayy lmao')
+    other: 'ayy'
+    delimiter: ' '
+    other: 'lmao'
+
+    >>> scan(' ayy    lmao ')
+    delimiter: ' '
+    other: 'ayy'
+    delimiter: '    '
+    other: 'lmao'
+    delimiter: ' '
+
+    >>> scan('"ayy" "lmao"')
+    quote: '"'
+    other: 'ayy'
+    quote: '"'
+    delimiter: ' '
+    quote: '"'
+    other: 'lmao'
+    quote: '"'
+
+    >>> scan(r'"ayy\"lmao"')
+    quote: '"'
+    other: 'ayy'
+    escape: '\\"'
+    other: 'lmao'
+    quote: '"'
+    """
+    def __init__(self, *, delimiter=' ', quote='"', escape='\\'):
+        delimiter = re.escape(delimiter)
+        quote = re.escape(quote)
+        escape = re.escape(escape)
+
+        self.pattern = re.compile(
+            '|'.join([
+                # French strings, hon hon hon
+                fr'(?P<delimiter>{delimiter}+)',
+                fr'(?P<quote>{quote})',
+                fr'(?P<escape>{escape}.)',  # Includes the escaped character.
+                fr'(?P<other>[^{delimiter}{quote}{escape}]+)',
+            ]),
+            flags=re.DOTALL,
+        )
+
+    def __call__(self, text):
+        scanner = self.pattern.scanner(text)
+        for match in iter(scanner.search, None):
+            yield match.lastgroup, match.group()
+
+    def show(self, text):
+        for kind, value in self(text):
+            print(f"{kind}: {value!r}")
