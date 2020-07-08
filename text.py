@@ -101,6 +101,10 @@ class QuoteScanner:
     quote: '"'
     """
     def __init__(self, *, delimiter=' ', quote='"', escape='\\'):
+        self.delimiter = delimiter
+        self.quote = quote
+        self.escape = escape
+
         delimiter = re.escape(delimiter)
         quote = re.escape(quote)
         escape = re.escape(escape)
@@ -124,3 +128,65 @@ class QuoteScanner:
     def show(self, text):
         for kind, value in self(text):
             print(f"{kind}: {value!r}")
+
+
+class QuoteSplitter:
+    r"""Split text on on a delimiter character, observing quotes and escapes.
+
+    >>> list(QuoteSplitter('ayy lmao'))
+    ['ayy', 'lmao']
+
+    >>> list(QuoteSplitter(' ayy lmao '))
+    ['ayy', 'lmao']
+
+    >>> list(QuoteSplitter('"ayy" "lmao"'))
+    ['ayy', 'lmao']
+
+    >>> list(QuoteSplitter('"ayy lmao"'))
+    ['ayy lmao']
+
+    >>> list(QuoteSplitter('ayy "lmao'))
+    Traceback (most recent call last):
+      ...
+    Exception: unmatched quote
+
+    >>> list(QuoteSplitter('ayy\ lmao'))
+    Traceback (most recent call last):
+      ...
+    Exception: unquoted escape sequence
+    """
+    Scanner = QuoteScanner
+
+    def __init__(self, text, **kwargs):
+        self.text = text
+        self.scanner = self.Scanner(**kwargs)
+        self.tokens = self.scanner(text)
+
+    def line(self):
+        for kind, value in self.tokens:
+            if kind == 'delimiter':
+                pass
+            elif kind == 'quote':
+                yield self.quote()
+            elif kind == 'escape':
+                raise Exception("unquoted escape sequence")
+            else:
+                yield value
+
+    __iter__ = line
+
+    def quote(self):
+        quote = []
+        for kind, value in self.tokens:
+            if kind == 'quote':
+                return ''.join(quote)
+            elif kind == 'escape':
+                escape, char = value
+                assert escape == self.scanner.escape
+                quote.append(self.escape(value))
+            else:
+                quote.append(value)
+        raise Exception("unmatched quote")
+
+    def escape(self, char):
+        return char
