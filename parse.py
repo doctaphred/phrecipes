@@ -135,41 +135,48 @@ class QuoteSplitter:
 
     >>> show = QuoteSplitter.show
 
+    Text is split into items on the delimiter character.
     >>> show('ayy lmao')
     'ayy'
     'lmao'
 
-    >>> show(' ayy lmao ')
+    Quotes preserve the delimiter character.
+    >>> show('" ayy    lmao "')
+    ' ayy    lmao '
+
+    Empty quotes represent an empty item.
+    >>> show(' ayy "" lmao ')
+    'ayy'
+    ''
+    'lmao'
+
+    Leading, trailing, and repeated delimiter characters are ignored.
+    >>> show(' ayy    lmao ')
     'ayy'
     'lmao'
 
-    >>> show('"ayy" "lmao"')
-    'ayy'
-    'lmao'
-
-    >>> show('"ayy lmao"')
-    'ayy lmao'
-
-    >>> show(r'"\"ayy\" \"lmao\""')
+    The quote character may be escaped within a quote.
+    >>> show('"~"ayy~" ~"lmao~""', escape='~')
     '"ayy" "lmao"'
 
-    >>> show(r'"\"ayy\" \"lmao\""')
-    '"ayy" "lmao"'
+    The escape character may be escaped within a quote.
+    >>> show('"~~~"ayy~~~" ~~~"lmao~~~""', escape='~')
+    '~"ayy~" ~"lmao~"'
 
-    >>> show(r'"\\"')
-    '\\'
-
+    Unescaped quote characters must occur in pairs.
     >>> show('ayy "lmao')
     Traceback (most recent call last):
       ...
     Exception: unmatched quote
 
-    >>> show('ayy\ lmao')
+    Escape sequences may only be used within quotes.
+    >>> show('ayy ~"lmao~"', escape='~')
     Traceback (most recent call last):
       ...
     Exception: unquoted escape sequence
 
-    >>> show('"ayy\ lmao"')
+    Only the quote and escape characters may be escaped.
+    >>> show('"ayy~ lmao"', escape='~')
     Traceback (most recent call last):
       ...
     Exception: invalid escape character ' '
