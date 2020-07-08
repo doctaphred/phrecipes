@@ -145,6 +145,9 @@ class QuoteSplitter:
     >>> list(QuoteSplitter('"ayy lmao"'))
     ['ayy lmao']
 
+    >>> list(QuoteSplitter(r'"\"ayy\" \"lmao\""'))
+    ['"ayy" "lmao"']
+
     >>> list(QuoteSplitter('ayy "lmao'))
     Traceback (most recent call last):
       ...
@@ -154,6 +157,11 @@ class QuoteSplitter:
     Traceback (most recent call last):
       ...
     Exception: unquoted escape sequence
+
+    >>> list(QuoteSplitter('"ayy\ lmao"'))
+    Traceback (most recent call last):
+      ...
+    Exception: invalid escape character ' '
     """
     Scanner = QuoteScanner
 
@@ -183,10 +191,12 @@ class QuoteSplitter:
             elif kind == 'escape':
                 escape, char = value
                 assert escape == self.scanner.escape
-                quote.append(self.escape(value))
+                quote.append(self.escape(char))
             else:
                 quote.append(value)
         raise Exception("unmatched quote")
 
     def escape(self, char):
+        if char != self.scanner.quote:
+            raise Exception(f"invalid escape character {char!r}")
         return char
