@@ -55,7 +55,7 @@ Unmatched quotes
     >>> show('ayy "lmao')
     Traceback (most recent call last):
       ...
-    Exception: unmatched quote
+    Exception: unmatched quote at column 5
 
 
 Escape sequences
@@ -64,15 +64,15 @@ Escape sequences
     >>> show(r'ayy \"lmao\"')
     Traceback (most recent call last):
       ...
-    Exception: unquoted escape sequence
+    Exception: unquoted escape sequence at column 5
 
     >>> show('ayy\ lmao')
     Traceback (most recent call last):
       ...
-    Exception: unquoted escape sequence
+    Exception: unquoted escape sequence at column 4
 
     >>> show('"ayy\ lmao"')
     Traceback (most recent call last):
       ...
-    Exception: invalid escape character ' '
+    Exception: invalid escape character ' ' at column 6
 

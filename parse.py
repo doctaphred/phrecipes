@@ -75,6 +75,10 @@ class Token(namedtuple('Token', ['kind', 'value', 'start', 'end'])):
     def from_match(cls, match):
         return cls(match.lastgroup, match.group(), *match.span())
 
+    @property
+    def loc(self):
+        return self.start + 1
+
 
 class QuoteScanner:
     r"""Tokenizer for QuoteSplitter.
@@ -177,19 +181,19 @@ class QuoteSplitter:
     >>> show('ayy "lmao')
     Traceback (most recent call last):
       ...
-    Exception: unmatched quote
+    Exception: unmatched quote at column 5
 
     Escape sequences may only be used within quotes.
     >>> show('ayy ~"lmao~"', escape='~')
     Traceback (most recent call last):
       ...
-    Exception: unquoted escape sequence
+    Exception: unquoted escape sequence at column 5
 
     Only the quote and escape characters may be escaped.
     >>> show('"ayy~ lmao"', escape='~')
     Traceback (most recent call last):
       ...
-    Exception: invalid escape character ' '
+    Exception: invalid escape character ' ' at column 6
 
     """
     Scanner = QuoteScanner
@@ -205,15 +209,16 @@ class QuoteSplitter:
                 pass
             elif token.kind == 'quote':
                 assert token.value == self.scanner.quote
-                yield self.quote()
+                yield self.quote(token)
             elif token.kind == 'escape':
-                raise Exception("unquoted escape sequence")
+                raise Exception(
+                    f"unquoted escape sequence at column {token.loc}")
             else:
                 yield token.value
 
     __iter__ = line
 
-    def quote(self):
+    def quote(self, open_quote_token):
         quote = []
         for token in self.tokens:
             if token.kind == 'quote':
@@ -223,7 +228,7 @@ class QuoteSplitter:
                 quote.append(self.escape(token))
             else:
                 quote.append(token.value)
-        raise Exception("unmatched quote")
+        raise Exception(f"unmatched quote at column {open_quote_token.loc}")
 
     def escape(self, token):
         escape, char = token.value
@@ -233,7 +238,8 @@ class QuoteSplitter:
         elif char == self.scanner.quote:
             return char
         else:
-            raise Exception(f"invalid escape character {char!r}")
+            raise Exception(
+                f"invalid escape character {char!r} at column {token.loc + 1}")
 
     @classmethod
     def show(cls, text, **kwargs):
