@@ -1,4 +1,5 @@
 import re
+from collections import namedtuple
 
 
 def lines(text, *, pattern=re.compile(r'^.*$', flags=re.MULTILINE)):
@@ -67,6 +68,14 @@ def trim_lines(text, *,
         yield match.groups()
 
 
+class Token(namedtuple('Token', ['kind', 'value', 'start', 'end'])):
+    __slots__ = ()
+
+    @classmethod
+    def from_match(cls, match):
+        return cls(match.lastgroup, match.group(), *match.span())
+
+
 class QuoteScanner:
     r"""Tokenizer for QuoteSplitter.
 
@@ -100,6 +109,7 @@ class QuoteScanner:
     other: 'lmao'
     quote: '"'
     """
+
     def __init__(self, *, delimiter=' ', quote='"', escape='\\'):
         self.delimiter = delimiter
         self.quote = quote
@@ -123,11 +133,11 @@ class QuoteScanner:
     def __call__(self, text):
         scanner = self.pattern.scanner(text)
         for match in iter(scanner.search, None):
-            yield match.lastgroup, match.group()
+            yield Token.from_match(match)
 
     def show(self, text):
-        for kind, value in self(text):
-            print(f"{kind}: {value!r}")
+        for token in self(text):
+            print(f"{token.kind}: {token.value!r}")
 
 
 class QuoteSplitter:
@@ -190,32 +200,34 @@ class QuoteSplitter:
         self.tokens = self.scanner(text)
 
     def line(self):
-        for kind, value in self.tokens:
-            if kind == 'delimiter':
+        for token in self.tokens:
+            if token.kind == 'delimiter':
                 pass
-            elif kind == 'quote':
+            elif token.kind == 'quote':
+                assert token.value == self.scanner.quote
                 yield self.quote()
-            elif kind == 'escape':
+            elif token.kind == 'escape':
                 raise Exception("unquoted escape sequence")
             else:
-                yield value
+                yield token.value
 
     __iter__ = line
 
     def quote(self):
         quote = []
-        for kind, value in self.tokens:
-            if kind == 'quote':
+        for token in self.tokens:
+            if token.kind == 'quote':
+                assert token.value == self.scanner.quote
                 return ''.join(quote)
-            elif kind == 'escape':
-                escape, char = value
-                assert escape == self.scanner.escape
-                quote.append(self.escape(char))
+            elif token.kind == 'escape':
+                quote.append(self.escape(token))
             else:
-                quote.append(value)
+                quote.append(token.value)
         raise Exception("unmatched quote")
 
-    def escape(self, char):
+    def escape(self, token):
+        escape, char = token.value
+        assert escape == self.scanner.escape
         if char == self.scanner.escape:
             return char
         elif char == self.scanner.quote:
