@@ -5,9 +5,10 @@ Extended doctests for ``parse``
     >>> from parse import *
 
 
-``QuoteSplitter``
------------------
-    >>> show = QuoteSplitter.show
+``QuotedListParser``
+--------------------
+
+    >>> show = QuotedListParser.show
 
 
     >>> show('""')

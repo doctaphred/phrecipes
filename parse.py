@@ -80,24 +80,24 @@ class Token(namedtuple('Token', ['kind', 'value', 'start', 'end'])):
         return self.start + 1
 
 
-class QuoteScanner:
-    r"""Tokenizer for QuoteSplitter.
+class QuotedListTokenizer:
+    r"""Tokenizer for QuotedListParser.
 
-    >>> scan = QuoteScanner().show
+    >>> show = QuotedListTokenizer().show
 
-    >>> scan('ayy lmao')
+    >>> show('ayy lmao')
     other: 'ayy'
     sep: ' '
     other: 'lmao'
 
-    >>> scan(' ayy    lmao ')
+    >>> show(' ayy    lmao ')
     sep: ' '
     other: 'ayy'
     sep: '    '
     other: 'lmao'
     sep: ' '
 
-    >>> scan('"ayy" "lmao"')
+    >>> show('"ayy" "lmao"')
     quote: '"'
     other: 'ayy'
     quote: '"'
@@ -106,7 +106,7 @@ class QuoteScanner:
     other: 'lmao'
     quote: '"'
 
-    >>> scan(r'"ayy\"lmao"')
+    >>> show(r'"ayy\"lmao"')
     quote: '"'
     other: 'ayy'
     escape: '\\"'
@@ -144,10 +144,10 @@ class QuoteScanner:
             print(f"{token.kind}: {token.value!r}")
 
 
-class QuoteSplitter:
+class QuotedListParser:
     r"""Split text on on a separator character, observing quotes and escapes.
 
-    >>> show = QuoteSplitter.show
+    >>> show = QuotedListParser.show
 
     Text is split into items on the separator character.
     >>> show('ayy lmao')
@@ -196,7 +196,7 @@ class QuoteSplitter:
     Exception: invalid escape character ' ' at column 6
 
     """
-    Scanner = QuoteScanner
+    Scanner = QuotedListTokenizer
 
     def __init__(self, text, **kwargs):
         self.text = text
