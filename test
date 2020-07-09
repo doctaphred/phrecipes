@@ -1,3 +1,3 @@
 #!/bin/sh -euvx
 
-python -m doctest -o ELLIPSIS *.py *.rst *.md
+python -m doctest -o ELLIPSIS *.py *.rst *.md xxx/*
