@@ -87,21 +87,21 @@ class QuoteScanner:
 
     >>> scan('ayy lmao')
     other: 'ayy'
-    delimiter: ' '
+    sep: ' '
     other: 'lmao'
 
     >>> scan(' ayy    lmao ')
-    delimiter: ' '
+    sep: ' '
     other: 'ayy'
-    delimiter: '    '
+    sep: '    '
     other: 'lmao'
-    delimiter: ' '
+    sep: ' '
 
     >>> scan('"ayy" "lmao"')
     quote: '"'
     other: 'ayy'
     quote: '"'
-    delimiter: ' '
+    sep: ' '
     quote: '"'
     other: 'lmao'
     quote: '"'
@@ -114,22 +114,22 @@ class QuoteScanner:
     quote: '"'
     """
 
-    def __init__(self, *, delimiter=' ', quote='"', escape='\\'):
-        self.delimiter = delimiter
+    def __init__(self, *, sep=' ', quote='"', escape='\\'):
+        self.sep = sep
         self.quote = quote
         self.escape = escape
 
-        delimiter = re.escape(delimiter)
+        sep = re.escape(sep)
         quote = re.escape(quote)
         escape = re.escape(escape)
 
         self.pattern = re.compile(
             '|'.join([
                 # French strings, hon hon hon
-                fr'(?P<delimiter>{delimiter}+)',
+                fr'(?P<sep>{sep}+)',
                 fr'(?P<quote>{quote})',
                 fr'(?P<escape>{escape}.)',  # Includes the escaped character.
-                fr'(?P<other>[^{delimiter}{quote}{escape}]+)',
+                fr'(?P<other>[^{sep}{quote}{escape}]+)',
             ]),
             flags=re.DOTALL,
         )
@@ -145,16 +145,16 @@ class QuoteScanner:
 
 
 class QuoteSplitter:
-    r"""Split text on on a delimiter character, observing quotes and escapes.
+    r"""Split text on on a separator character, observing quotes and escapes.
 
     >>> show = QuoteSplitter.show
 
-    Text is split into items on the delimiter character.
+    Text is split into items on the separator character.
     >>> show('ayy lmao')
     'ayy'
     'lmao'
 
-    Quotes preserve the delimiter character.
+    Quotes preserve the separator character.
     >>> show('" ayy    lmao "')
     ' ayy    lmao '
 
@@ -164,7 +164,7 @@ class QuoteSplitter:
     ''
     'lmao'
 
-    Leading, trailing, and repeated delimiter characters are ignored.
+    Leading, trailing, and repeated separator characters are ignored.
     >>> show(' ayy    lmao ')
     'ayy'
     'lmao'
@@ -205,7 +205,7 @@ class QuoteSplitter:
 
     def line(self):
         for token in self.tokens:
-            if token.kind == 'delimiter':
+            if token.kind == 'sep':
                 pass
             elif token.kind == 'quote':
                 assert token.value == self.scanner.quote
