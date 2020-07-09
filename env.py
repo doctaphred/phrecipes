@@ -24,6 +24,35 @@ def getenv(name, convert=str, default=None):
     return convert(environ[name]) if name in environ else default
 
 
+def env_config(prefix, spec, get=os.environ.get):
+    """Create a config dict from the environment.
+
+    >>> spec = [
+    ...     ('flag1', bool, ''),
+    ...     ('flag2', bool, '1'),
+    ...     ('number', int, '3'),
+    ...     ('list', str.split, ''),
+    ... ]
+
+    >>> env_config('REALLY_LONG_PREFIX_', spec)
+    {'flag1': False, 'flag2': True, 'number': 3, 'list': []}
+
+    >>> alternate_env = {
+    ...     'REALLY_LONG_PREFIX_FLAG1': '1',
+    ...     'REALLY_LONG_PREFIX_FLAG2': '',
+    ...     'REALLY_LONG_PREFIX_LIST': 'a b c',
+    ... }
+
+    >>> env_config('REALLY_LONG_PREFIX_', spec, get=alternate_env.get)
+    {'flag1': True, 'flag2': False, 'number': 3, 'list': ['a', 'b', 'c']}
+
+    """
+    return {
+        name: convert(get(prefix + name.upper(), default))
+        for name, convert, default in spec
+    }
+
+
 class Env:
     """Access os.environ with getattr syntax and type conversions.
 
