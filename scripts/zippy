@@ -26,6 +26,7 @@ if __name__ == '__main__':
     exepath = f"{path}.exe"
 
     with PyZipFile(zippath, 'w') as zf:
+        zf.debug = 3  # Print added files.
         zf.writepy(path)
 
     with open(exepath, 'wb') as xf:
