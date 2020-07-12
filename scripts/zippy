@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Make an executable file from the given Python source directory.
+
+NOTE: A file name __main__.py is required at the directory's top level.
+"""
+import os
+import stat
+from shutil import copyfileobj
+from zipfile import PyZipFile
+
+
+SHEBANG = b'#!/usr/bin/env python3\n'
+
+
+def chmod_exe(path):
+    old_mode = os.stat(path).st_mode
+    new_mode = old_mode | stat.S_IEXEC
+    os.chmod(path, new_mode)
+
+
+if __name__ == '__main__':
+    import sys
+    _, path = sys.argv
+
+    zippath = f"{path}.zip"
+    exepath = f"{path}.exe"
+
+    with PyZipFile(zippath, 'w') as zf:
+        zf.writepy(path)
+
+    with open(exepath, 'wb') as xf:
+        xf.write(SHEBANG)
+        with open(zippath, 'rb') as zf:
+            copyfileobj(zf, xf)
+
+    chmod_exe(exepath)
