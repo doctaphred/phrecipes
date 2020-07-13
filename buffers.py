@@ -1,8 +1,9 @@
 from functools import partial
+import hashlib
 import sys
 
 
-def relay(readinto, consume, *, buffer=bytearray(1024)):
+def relay(readinto, consume, *, buffer=bytearray(2048)):
     r"""Relay chunks of bytes from a producer to a consumer.
 
     >>> from io import BytesIO
@@ -56,10 +57,27 @@ class fanout(list):
             func(*args, **kwargs)
 
 
+def multihash(names, stream, **kwargs):
+    """Compute multiple hashes in a single pass.
+
+    >>> from io import BytesIO
+    >>> hashes = multihash(['md5', 'sha1', 'sha256'], BytesIO(b'ayy lmao'))
+    >>> for name, digest in hashes.items():
+    ...     print(f"{name}: {digest}")
+    md5: 2b14f6a69199243f570031bf94865bb6
+    sha1: 1ac4eb815f2b72da8fe50cc44f236a41368c121c
+    sha256: 363bd719f9697e46e6514bf1f0efce0e5ace75683697fb820065a05c8fb3135e
+    """
+    hashers = [hashlib.new(name) for name in names]
+    consume = fanout([hasher.update for hasher in hashers])
+    relay(readinto=stream.readinto, consume=consume, **kwargs)
+    return {name: hasher.hexdigest() for name, hasher in zip(names, hashers)}
+
+
 if __name__ == '__main__':
-    # Echo stdin to stderr, and print the SHA-256 hash to stdout.
-    from hashlib import sha256
-    hasher = sha256()
+    # Echo stdin to stderr, and print several hashes to stdout.
+    names = ['md5', 'sha1', 'sha256']
+    hashers = [hashlib.new(name) for name in names]
     relay(
         readinto=sys.stdin.buffer.readinto1,
         consume=fanout([
@@ -67,8 +85,9 @@ if __name__ == '__main__':
             # sys.stderr.buffer.write,
             # writeflush(sys.stdout.buffer),
             writeflush(sys.stderr.buffer),
-            hasher.update,
+            *[hasher.update for hasher in hashers],
         ]),
         buffer=bytearray(2048),
     )
-    print(hasher.hexdigest())
+    for name, hasher in zip(names, hashers):
+        print(f"{name}: {hasher.hexdigest()}")
