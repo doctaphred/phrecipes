@@ -50,5 +50,20 @@ cat = partial(
 )
 
 
+class fanout(list):
+    def __call__(self, *args, **kwargs):
+        for func in self:
+            func(*args, **kwargs)
+
+
 if __name__ == '__main__':
-    cat()
+    relay(
+        readinto=sys.stdin.buffer.readinto1,
+        consume=fanout([
+            sys.stdout.buffer.write,
+            # sys.stderr.buffer.write,
+            writeflush(sys.stderr.buffer),
+            # writeflush(sys.stdout.buffer),
+        ]),
+        buffer=bytearray(1),
+    )
