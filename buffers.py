@@ -57,13 +57,18 @@ class fanout(list):
 
 
 if __name__ == '__main__':
+    # Echo stdin to stderr, and print the SHA-256 hash to stdout.
+    from hashlib import sha256
+    hasher = sha256()
     relay(
         readinto=sys.stdin.buffer.readinto1,
         consume=fanout([
-            sys.stdout.buffer.write,
             # sys.stderr.buffer.write,
-            writeflush(sys.stderr.buffer),
+            # sys.stderr.buffer.write,
             # writeflush(sys.stdout.buffer),
+            writeflush(sys.stderr.buffer),
+            hasher.update,
         ]),
-        buffer=bytearray(1),
+        buffer=bytearray(2048),
     )
+    print(hasher.hexdigest())
