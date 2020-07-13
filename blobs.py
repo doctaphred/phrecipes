@@ -52,4 +52,4 @@ def all_blobs(size=0, start=0):
     """
     from itertools import count
     for size in count(size):
-        yield from blobs(size)
+        yield from blobs(size, start=start)
