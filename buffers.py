@@ -1,3 +1,7 @@
+from functools import partial
+import sys
+
+
 def relay(readinto, consume, *, buffer=bytearray(1024)):
     r"""Relay chunks of bytes from a producer to a consumer.
 
@@ -27,3 +31,24 @@ def relay(readinto, consume, *, buffer=bytearray(1024)):
             break
         # Use the memoryview to avoid copying slices.
         consume(view[:bytes_read])
+
+
+class writeflush:
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    def __call__(self, chunk):
+        written = self.buffer.write(chunk)
+        self.buffer.flush()
+        return written
+
+
+cat = partial(
+    relay,
+    readinto=sys.stdin.buffer.readinto1,
+    consume=writeflush(sys.stdout.buffer),
+)
+
+
+if __name__ == '__main__':
+    cat()
