@@ -3,7 +3,33 @@ import hashlib
 import sys
 
 
-def relay(readinto, consume, *, buffer=bytearray(2048)):
+def chunks(readinto, buffer):
+    r"""Read chunks of bytes into the provided buffer.
+
+    Yields memoryview slices of the buffer to avoid unnecessary copies.
+
+    >>> from io import BytesIO
+
+    >>> input = BytesIO(b'ayy lmao')
+    >>> buffer = bytearray(3)
+    >>> for chunk in chunks(input.readinto, buffer):
+    ...     print(buffer, chunk.tobytes())
+    bytearray(b'ayy') b'ayy'
+    bytearray(b' lm') b' lm'
+    bytearray(b'aom') b'ao'
+
+    """
+    assert len(buffer) > 0
+    view = memoryview(buffer)
+    while True:
+        bytes_read = readinto(buffer)
+        if not bytes_read:
+            break
+        # Slice the memoryview to avoid copying data from the buffer.
+        yield view[:bytes_read]
+
+
+def relay(readinto, consume, *, buffer=None):
     r"""Relay chunks of bytes from a producer to a consumer.
 
     >>> from io import BytesIO
@@ -24,14 +50,10 @@ def relay(readinto, consume, *, buffer=bytearray(2048)):
     b'ao'
 
     """
-    assert len(buffer) > 0
-    view = memoryview(buffer)
-    while True:
-        bytes_read = readinto(buffer)
-        if not bytes_read:
-            break
-        # Use the memoryview to avoid copying slices.
-        consume(view[:bytes_read])
+    if buffer is None:
+        buffer = bytearray(2048)
+    for chunk in chunks(readinto, buffer):
+        consume(chunk)
 
 
 class writeflush:
@@ -87,7 +109,6 @@ if __name__ == '__main__':
             writeflush(sys.stderr.buffer),
             *[hasher.update for hasher in hashers],
         ]),
-        buffer=bytearray(2048),
     )
     for name, hasher in zip(names, hashers):
         print(f"{name}: {hasher.hexdigest()}")
