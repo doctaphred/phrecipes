@@ -4,7 +4,7 @@ import sys
 
 
 def chunks(readinto, buffer):
-    r"""Read chunks of bytes into the provided buffer.
+    """Read chunks of bytes into the provided buffer.
 
     Yields memoryview slices of the buffer to avoid unnecessary copies.
 
@@ -30,7 +30,7 @@ def chunks(readinto, buffer):
 
 
 def relay(readinto, consume, *, buffer=None):
-    r"""Relay chunks of bytes from a producer to a consumer.
+    """Relay chunks of bytes from a producer to a consumer.
 
     >>> from io import BytesIO
 
