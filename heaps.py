@@ -80,8 +80,7 @@ class PriorityQueue:
         self._heap = []
         self._counter = count()
 
-    def push(self, item, priority=0):
-        from heapq import heappush
+    def _wrap(self, item, priority):
         # Entries are stored as tuples, which heapq compares when they
         # are pushed or popped. The priority and a unique ID are stored
         # as the first two elements to make sure the item itself is
@@ -89,12 +88,19 @@ class PriorityQueue:
         #
         # The heapq module implements a min-heap, so invert the priority
         # and make the IDs monotonically increase to ensure stability.
-        heappush(self._heap, (-priority, next(self._counter), item))
+        return (-priority, next(self._counter), item)
+
+    def push(self, item, priority=0):
+        heapq.heappush(self._heap, self._wrap(item, priority))
 
     def pop(self):
-        from heapq import heappop
-        _, _, item = heappop(self._heap)
-        return item
+        return heapq.heappop(self._heap)[-1]
+
+    def pushpop(self, item, priority=0):
+        return heapq.heappushpop(self._heap, self._wrap(item, priority))[-1]
+
+    def replace(self, item, priority=0):
+        return heapq.heapreplace(self._heap, self._wrap(item, priority))[-1]
 
     def peek(self):
         """
@@ -106,8 +112,7 @@ class PriorityQueue:
         >>> q.push(None)
         >>> q.peek()
         """
-        _, _, item = self._heap[0]
-        return item
+        return self._heap[0][-1]
 
     def __bool__(self):
         """
