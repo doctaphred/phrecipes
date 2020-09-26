@@ -1,33 +1,52 @@
 import heapq
+from functools import partial
 
 
 class Heap:
     """Simple wrapper around heapq functions.
 
-    Why the standard library doesn't include a class like this is beyond me...
+        >>> h = Heap()
+        >>> h.push((5, 'write code'))
+        >>> h.push((7, 'release product'))
+        >>> h.push((1, 'write spec'))
+        >>> h.push((3, 'create tests'))
+        >>> h.pop()
+        (1, 'write spec')
+
+    Look Ma, heapsort!
+
+        >>> list(Heap([1, 3, 5, 7, 9, 2, 4, 6, 8, 0]))
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
     """
 
     def __init__(self, items=None):
         if items is None:
             self._items = []
         else:
-            heapq.heapify(items)
-            self._items = items
-
-    def push(self, item):
-        return heapq.heappush(self._items, item)
-
-    def pop(self):
-        return heapq.heappop(self._items)
-
-    def pushpop(self, item):
-        return heapq.pushpop(self._items)
-
-    def replace(self, item):
-        return heapq.heapreplace(self._items, item)
+            self._items = list(items)
+            heapq.heapify(self._items)
+        for name in ['push', 'pop', 'pushpop', 'replace']:
+            func = getattr(heapq, 'heap' + name)
+            setattr(self, name, partial(func, self._items))
 
     def peek(self):
         return self._items[0]
+
+    def __bool__(self):
+        return bool(self._items)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __next__(self):
+        try:
+            return self.pop()
+        except IndexError:
+            raise StopIteration
+
+    def __iter__(self):
+        return self
 
 
 class PriorityQueue:
