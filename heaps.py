@@ -39,6 +39,24 @@ class Heap:
     def __len__(self):
         return len(self._items)
 
+    def __contains__(self, obj):
+        """Prevent implicit destructive iteration.
+
+        >>> h = Heap()
+        >>> 'ayy' in h
+        False
+        >>> h.push('ayy')
+        >>> 'ayy' in h
+        True
+        >>> 'ayy' in h
+        True
+        >>> h.pop()
+        'ayy'
+        >>> 'ayy' in h
+        False
+        """
+        return any(item == obj for item in self._items)
+
     def __next__(self):
         try:
             return self.pop()
@@ -141,6 +159,24 @@ class PriorityQueue:
         0
         """
         return len(self._heap)
+
+    def __contains__(self, item):
+        """Prevent implicit destructive iteration.
+
+        >>> q = PriorityQueue()
+        >>> 'ayy' in q
+        False
+        >>> q.push('ayy')
+        >>> 'ayy' in q
+        True
+        >>> 'ayy' in q
+        True
+        >>> q.pop()
+        'ayy'
+        >>> 'ayy' in q
+        False
+        """
+        return any(entry[-1] == item for entry in self._heap)
 
     def __next__(self):
         try:
