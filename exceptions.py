@@ -5,6 +5,18 @@ def raise_(exc):
     raise exc
 
 
+def try_map(f, it, ignore=Exception):
+    """
+    >>> list(try_map(int, '123 456'))
+    [1, 2, 3, 4, 5, 6]
+    """
+    for obj in it:
+        try:
+            yield f(obj)
+        except ignore:
+            pass
+
+
 def unique_exception(name):
     """Create a unique subclass of BaseException.
 
