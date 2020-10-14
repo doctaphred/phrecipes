@@ -19,18 +19,15 @@ class join:
 
     Also works as a method decorator:
 
-        >>> class Thing:
-        ...     def __init__(self, **kwargs):
-        ...         vars(self).update(kwargs)
-        ...
+        >>> class Fancy(dict):
         ...     @join.on('\n')
         ...     def __repr__(self):
         ...         yield type(self).__name__
-        ...         for name, value in vars(self).items():
+        ...         for name, value in self.items():
         ...             yield f'  {name}: {value}'
 
-        >>> Thing(a=1, b=2)
-        Thing
+        >>> Fancy(a=1, b=2)
+        Fancy
           a: 1
           b: 2
 
