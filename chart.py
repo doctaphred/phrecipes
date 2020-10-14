@@ -4,12 +4,12 @@ from ez import ez
 class BarChart(ez):
     """Draw quick bar charts in the terminal!
 
-    >>> chart = BarChart(width=10, ceiling=10)
+    >>> chart = BarChart(width=10, ceiling=10, template='{value:>2} [{}]')
     >>> chart
-    BarChart(width=10, ceiling=10)
+    BarChart(width=10, ceiling=10, template='{value:>2} [{}]')
 
     >>> for value in range(-1, 12):
-    ...     print(format(value, '>2'), chart[value])
+    ...     print(chart[value])
     -1 [??????????]
      0 [          ]
      1 [#         ]
@@ -79,4 +79,4 @@ class BarChart(ez):
             return self.full * full + self.empty * empty
 
     def __getitem__(self, value):
-        return self.template.format(self.bar(value))
+        return self.template.format(self.bar(value), value=value)
