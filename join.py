@@ -23,8 +23,8 @@ class join:
         ...     @join.on('\n')
         ...     def __repr__(self):
         ...         yield type(self).__name__
-        ...         for name, value in self.items():
-        ...             yield f'  {name}: {value}'
+        ...         for key in self:
+        ...             yield f'  {key}: {self[key]}'
 
         >>> Fancy(a=1, b=2)
         Fancy
