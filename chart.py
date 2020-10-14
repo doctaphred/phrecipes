@@ -35,7 +35,7 @@ class BarChart(ez):
     underflow = '?'
     width = 10
     floor = 0
-    ceiling = 100
+    ceiling = 1
 
     def fraction(self, value):
         """
