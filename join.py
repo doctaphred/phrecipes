@@ -44,6 +44,6 @@ class join:
         self, *args = args
         return self.sep.join(map(str, self.func(*args, **kwargs)))
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner=None):
         """Mimic FunctionType's behavior to work as a method decorator."""
         return partial(self, instance)
