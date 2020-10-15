@@ -209,29 +209,62 @@ class Stats:
 def stats(samples):
     """Compute statistics in a single pass over the samples.
 
-    Returns a tuple: (first, last, min, max, sum, mean, count, Σσ²)
+    Returns a dict with the following keys:
 
-    Uses Welford's method for computing variance.
+        count, first, last, smallest, largest, total, mean, variance
+
+    Uses Welford's method with Bessel's correction for computing the
+    unbiased sample variance.
 
     See https://www.johndcook.com/blog/standard_deviation/
+    and https://en.wikipedia.org/wiki/Bessel%27s_correction
+
+    Example:
+
+        >>> pstats([1, 2, 3])
+        count: 3
+        first: 1
+        last: 3
+        smallest: 1
+        largest: 3
+        total: 6
+        mean: 2.0
+        variance: 1.0
+
+    Note that the unbiased sample variance is 1.0, not 2/3.
+
     """
-    it = iter(samples)
-    first = sample = smallest = largest = total = mean = next(it)
+    samples = iter(samples)
     count = 1
+    first = last = smallest = largest = total = mean = next(samples)
     ssdm = 0  # Sum of squared deviations from the mean.
 
-    for sample in it:
+    prev_dev = 0  # This gets clobbered *iff* samples isn't empty.
+    for last in samples:
         count += 1
-        total += sample
-        if sample < smallest:
-            smallest = sample
-        elif sample > largest:
-            largest = sample
+        total += last
+        if last < smallest:
+            smallest = last
+        elif last > largest:
+            largest = last
 
-        diff = sample - mean
-        mean += diff / count
-        # Compute additional squared deviation using
-        # both the previous and current means.
-        ssdm += diff * (sample - mean)
+        prev_dev = last - mean
+        mean += prev_dev / count
+        # Welford's method: compute additional squared deviation using
+        # the deviation from both the previous and current means.
+        ssdm += prev_dev * (last - mean)
 
-    return first, sample, smallest, largest, total, mean, ssdm
+    try:
+        # Bessel's correction: use n - 1 to reduce sample bias.
+        variance = ssdm / (count - 1)
+    except ZeroDivisionError:
+        variance = 0.0
+
+    del samples, prev_dev, ssdm
+    return locals()
+
+
+def pstats(samples):
+    """Compute and print statistics about the samples."""
+    for k, v in stats(samples).items():
+        print(f'{k}: {v}')
