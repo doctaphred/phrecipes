@@ -68,17 +68,16 @@ def wrap(wrapper, func=None):
     Handy for functions that should really just return a container, but
     which require multiple statements and can't use a comprehension.
 
-        >>> @wrap(dict)
+        >>> @wrap(tuple)
         ... def pythonize(argv):
         ...     from ast import literal_eval
         ...     for arg in argv:
         ...         try:
-        ...             thing = literal_eval(arg)
+        ...             yield literal_eval(arg)
         ...         except Exception:
-        ...             thing = arg
-        ...         yield arg, thing
+        ...             yield arg
         >>> pythonize(['1', 'None', '"ayy"', 'lmao'])
-        {'1': 1, 'None': None, '"ayy"': 'ayy', 'lmao': 'lmao'}
+        (1, None, 'ayy', 'lmao')
 
     Also works as a method decorator:
 
