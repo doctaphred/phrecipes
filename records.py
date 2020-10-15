@@ -58,14 +58,20 @@ Instances are cached:
 Caching is implemented via weakrefs, so instances are destroyed when no
 non-weak references remain:
 
-    >>> id(record(a=1, b=2)) == id(record(a=1, b=2))
+    >>> id1 = id(record(a=1, b=2))
+    >>> id2 = id(record(a=1, b=2))
+    >>> id1 == id2
     False
 
     >>> ref = record(a=1, b=2)
-    >>> id(record(a=1, b=2)) == id(record(a=1, b=2))
+    >>> id1 = id(record(a=1, b=2))
+    >>> id2 = id(record(a=1, b=2))
+    >>> id1 == id2
     True
     >>> del ref
-    >>> id(record(a=1, b=2)) == id(record(a=1, b=2))
+    >>> id1 = id(record(a=1, b=2))
+    >>> id2 = id(record(a=1, b=2))
+    >>> id1 == id2
     False
 
 Note, however, that implicit references may persist during the
