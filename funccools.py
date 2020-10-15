@@ -62,7 +62,45 @@ only_when.csvoss_edition = lambda condition: (
 )
 
 
-def wrap(before=None, after=None, ex=None):
+def wrap(wrapper, func=None):
+    r"""Pass a function's return values through another function.
+
+    Handy for functions that should really just return a container, but
+    which require multiple statements and can't use a comprehension.
+
+        >>> @wrap(dict)
+        ... def pythonize(argv):
+        ...     from ast import literal_eval
+        ...     for arg in argv:
+        ...         try:
+        ...             thing = literal_eval(arg)
+        ...         except Exception:
+        ...             thing = arg
+        ...         yield arg, thing
+        >>> pythonize(['1', 'None', '"ayy"', 'lmao'])
+        {'1': 1, 'None': None, '"ayy"': 'ayy', 'lmao': 'lmao'}
+
+    Also works as a method decorator:
+
+        >>> class Fancy(dict):
+        ...     @wrap('\n'.join)
+        ...     def __repr__(self):
+        ...         yield type(self).__name__
+        ...         for key in self:
+        ...             yield f'  {key}: {self[key]}'
+
+        >>> Fancy(a=1, b=2)
+        Fancy
+          a: 1
+          b: 2
+
+    """
+    if func is None:
+        return partial(wrap, wrapper)
+    return lambda *args, **kwargs: wrapper(func(*args, **kwargs))
+
+
+def sandwich(before=None, after=None, ex=None):
     """Apply additional functions before and afterward."""
     def decorator(func):
         @wraps(func)
@@ -91,7 +129,7 @@ def debug(before=None, after=None):
     """Apply additional functions, unless compiled with -O."""
     if not __debug__:
         return nop
-    return wrap(before, after)
+    return sandwich(before, after)
 
 
 def curried(func, *, missing_args_template="{.__name__}() missing "):
