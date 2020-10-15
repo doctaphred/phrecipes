@@ -2,12 +2,12 @@ import warnings
 
 
 def mean(sum, count):
-    """μ"""
+    """x̄"""
     return sum / count
 
 
 def variance(ssdm, count):
-    """σ²"""
+    """Unbiased sample variance, using Bessel's correction (s²)."""
     try:
         return ssdm / (count - 1)
     except ZeroDivisionError:
@@ -15,11 +15,11 @@ def variance(ssdm, count):
 
 
 def stdev(ssdm, count):
-    """σ"""
+    """s"""
     return variance(ssdm, count) ** 0.5
 
 
-μ, σ, σ2 = mean, stdev, variance
+x̄, s, s2 = mean, stdev, variance
 
 
 def indented(obj, template='    {}'):
@@ -42,20 +42,20 @@ class Stats:
         100,000 samples, Σ=4,999,950,000
         first=0, last=99,999
         min=0, max=99,999
-        μ=5e+04, σ=2.89e+04
+        x̄=5e+04, s=2.89e+04
 
     >>> s = Stats([0]); s
     Stats:
         1 sample, Σ=0
         first=0, last=0
         min=0, max=0
-        μ=0, σ=0
+        x̄=0, s=0
     >>> s.add(-2.0); s
     Stats:
         2 samples, Σ=-2.0
         first=0, last=-2.0
         min=-2.0, max=0
-        μ=-1, σ=1.41
+        x̄=-1, s=1.41
 
     >>> Stats([])
     Traceback (most recent call last):
@@ -68,11 +68,11 @@ class Stats:
         'min',
         'max',
         'sum',
-        'mean',  # μ
+        'mean',
     )
     __slots__ = things + (
         'count',
-        'ssdm',  # Sum of squared deviations from the mean (Σσ²).
+        'ssdm',  # Sum of squared deviations from the mean.
     )
 
     def __init__(self, samples):
@@ -177,7 +177,7 @@ class Stats:
                 f"{self.count:,} sample{s}, Σ={self.sum:,}",
                 f"first={self.first:,}, last={self.last:,}",
                 f"min={self.min:,}, max={self.max:,}",
-                f"μ={self.mean:,.3g}, σ={self.stdev:,.3g}",
+                f"x̄={self.mean:,.3g}, s={self.stdev:,.3g}",
             ),
         )
 
@@ -190,15 +190,19 @@ class Stats:
     # TODO: __add__, __or__, __iadd__, etc
 
     @property
-    def μ(self):
+    def x̄(self):
         return self.mean
 
     @property
-    def σ(self):
+    def s(self):
         return self.stdev
 
     @property
-    def Σσ2(self):
+    def s2(self):
+        return self.variance
+
+    @property
+    def Σs2(self):
         return self.ssdm
 
 
