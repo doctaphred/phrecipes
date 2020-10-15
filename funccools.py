@@ -62,6 +62,21 @@ only_when.csvoss_edition = lambda condition: (
 )
 
 
+def fancy(wrapper, func=None):
+    """Write fancy comprehensions using statements.
+
+    >>> @fancy(list)
+    ... def stuff():
+    ...     yield 'ayy'
+    ...     yield 'lmao'
+    >>> stuff
+    ['ayy', 'lmao']
+    """
+    if func is None:
+        return partial(fancy, wrapper)
+    return wrapper(func())
+
+
 def wrap(wrapper, func=None):
     r"""Pass a function's return values through another function.
 
