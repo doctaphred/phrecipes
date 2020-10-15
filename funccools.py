@@ -96,7 +96,10 @@ def wrap(wrapper, func=None):
     """
     if func is None:
         return partial(wrap, wrapper)
-    return lambda *args, **kwargs: wrapper(func(*args, **kwargs))
+    return wraps(func)(
+        lambda *args, **kwargs:
+            wrapper(func(*args, **kwargs))
+    )
 
 
 def sandwich(before=None, after=None, ex=None):
