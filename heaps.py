@@ -93,7 +93,7 @@ class PriorityQueue:
 
     """
 
-    def __init__(self, items=None):
+    def __init__(self):
         from itertools import count
         self._heap = []
         self._counter = count()
