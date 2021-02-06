@@ -91,7 +91,7 @@ def wrap(wrapper, func=None):
         ...             yield literal_eval(arg)
         ...         except Exception:
         ...             yield arg
-        >>> pythonize(['1', 'None', '"ayy"', 'lmao'])
+        >>> pythonize('1 None "ayy" lmao'.split())
         (1, None, 'ayy', 'lmao')
 
     Also works as a method decorator:
