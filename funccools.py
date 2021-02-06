@@ -99,7 +99,7 @@ def wrap(wrapper, func=None):
         >>> class Fancy(dict):
         ...     @wrap('\n'.join)
         ...     def __repr__(self):
-        ...         yield type(self).__name__
+        ...         yield self.__class__.__name__
         ...         for key in self:
         ...             yield f'  {key}: {self[key]}'
 
