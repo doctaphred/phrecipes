@@ -51,6 +51,12 @@ def matches(iterable, predicate, value):
             yield element
 
 
+def batches(iterable, batch_size):
+    """Lazily divide an iterable into batches of the given size."""
+    while batch := list(islice(iterable, batch_size)):
+        yield batch
+
+
 def lazydivvy(iterable, predicate, values):
     """Map values to iterables of elements whose predicate returns that value.
 
