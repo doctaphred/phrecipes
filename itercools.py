@@ -310,12 +310,15 @@ def intersperse(sep, it):
         yield elem
 
 
-def check(func, seq, *, allow_empty=False):
-    """Wrap a sequence, raising ValueError if the function fails."""
+def check(func, seq, *, exc=ValueError, allow_empty=True):
+    """Wrap a sequence, raising `exc` if the function returns False."""
+    i = None
     for i, item in enumerate(seq):
         if not func(item):
-            raise ValueError(f"{item!r} at position {i}")
+            raise exc(f"{item!r} at position {i}")
         yield item
+    if i is None and not allow_empty:
+        raise exc("empty sequence")
 
 
 def check_cmp(cmp, seq, *, allow_empty=False):
