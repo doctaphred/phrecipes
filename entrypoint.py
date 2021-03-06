@@ -37,9 +37,21 @@ Compound objects:
 
 Name lookups:
 
-    >>> foo, bar = 'ayy', 'lmao'  # doctest: +SKIP
-    >>> splitparse(''' .foo .bar ''')  # doctest: +SKIP
-    ('ayy', 'lmao')
+    >>> foo, bar = 'ayy', 'lmao'
+    >>> splitparse(''' .foo .bar . ... ''', namespace=globals())
+    ('ayy', 'lmao', '.', '...')
+
+...with *exceptional* error handling:
+
+    >>> splitparse(''' .foo.bar.baz ''', namespace=globals())
+    Traceback (most recent call last):
+      ...
+    Exception: error looking up '.foo.bar.baz', at attribute 'bar' of object 'ayy': ...
+
+    >>> splitparse(''' .foo .bar .baz ''', namespace=globals())
+    Traceback (most recent call last):
+      ...
+    Exception: error looking up '.baz': 'baz' is not in the provided namespace
 
 Function calls:
 
@@ -71,17 +83,17 @@ Edge cases:
     >>> splitparse('')
     ()
 
-"""
+"""  # noqa
 
 
-def splitparse(line):
+def splitparse(line, /, *args, **kwargs):
     import shlex
-    return parse(shlex.split(line))
+    return parse(shlex.split(line), *args, **kwargs)
 
 
-def parse(args):
+def parse(argv, /, *args, **kwargs):
     """Parse a sequence of arguments."""
-    return tuple(map(parsepos, args))
+    return tuple(parsepos(arg, *args, **kwargs) for arg in argv)
 
 
 class convert:
@@ -153,8 +165,31 @@ class convert:
     # TODO: Disallow negative values in hexint/octint/binint?
 
 
-def parsepos(arg, *, typesep=':', conversions=vars(convert)):
+def parsepos(arg, /, namespace=None, *, lookup='.', call='@', typesep=':',
+             conversions=vars(convert)):
     """Parse a single positional argument."""
+    if arg.startswith(lookup) and arg != '...' and arg != '.':
+        assert namespace is not None, "must provide a namespace for lookups"
+        name, *names = arg[1:].split(lookup)
+        try:
+            obj = namespace[name]
+        except KeyError as exc:
+            raise Exception(
+                f"error looking up {arg!r}:"
+                f" {name!r} is not in the provided namespace") from exc
+        try:
+            for i, name in enumerate(names):
+                obj = getattr(obj, name)
+        except Exception as exc:
+            msg = f"{exc.__class__.__name__}: {exc}"
+            raise Exception(
+                f"error looking up {arg!r}, at attribute {name!r}"
+                f" of object {obj!r}: {msg!r}") from exc
+        return obj
+
+    elif arg.startswith(call):
+        raise NotImplementedError(arg)
+
     parts = arg.split(typesep, maxsplit=1)
     try:
         conv, rep = parts
