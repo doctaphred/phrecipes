@@ -165,26 +165,30 @@ class convert:
     # TODO: Disallow negative values in hexint/octint/binint?
 
 
-def parsepos(arg, /, namespace=None, *, lookup='.', call='@', typesep=':',
+def parsepos(arg, /, namespace=None, *, lookup_sep='.', call='@', conv_sep=':',
              conversions=vars(convert)):
     """Parse a single positional argument."""
-    if arg.startswith(lookup) and arg != '...' and arg != '.':
+    if arg.startswith(lookup_sep) and arg != '...' and arg != '.':
         assert namespace is not None, "must provide a namespace for lookups"
-        return do_lookup(namespace, arg, sep=lookup)
+        return do_lookup(namespace, arg, sep=lookup_sep)
 
     elif arg.startswith(call):
         raise NotImplementedError(arg)
 
-    parts = arg.split(typesep, maxsplit=1)
+    return do_conversion(conversions, arg, sep=conv_sep)
+
+
+def do_conversion(conversions, arg, *, sep=':'):
+    parts = arg.split(sep, maxsplit=1)
     try:
         conv, rep = parts
     except ValueError:
-        assert typesep not in arg
+        assert sep not in arg
         # Positional args without ':' are just strings.
         return arg
 
     if not conv:
-        assert arg.startswith(typesep)
+        assert arg.startswith(sep)
         conv = 'auto'
 
     try:
