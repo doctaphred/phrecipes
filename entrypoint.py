@@ -170,22 +170,7 @@ def parsepos(arg, /, namespace=None, *, lookup='.', call='@', typesep=':',
     """Parse a single positional argument."""
     if arg.startswith(lookup) and arg != '...' and arg != '.':
         assert namespace is not None, "must provide a namespace for lookups"
-        name, *names = arg[1:].split(lookup)
-        try:
-            obj = namespace[name]
-        except KeyError as exc:
-            raise Exception(
-                f"error looking up {arg!r}:"
-                f" {name!r} is not in the provided namespace") from exc
-        try:
-            for i, name in enumerate(names):
-                obj = getattr(obj, name)
-        except Exception as exc:
-            msg = f"{exc.__class__.__name__}: {exc}"
-            raise Exception(
-                f"error looking up {arg!r}, at attribute {name!r}"
-                f" of object {obj!r}: {msg!r}") from exc
-        return obj
+        return do_lookup(namespace, arg, sep=lookup)
 
     elif arg.startswith(call):
         raise NotImplementedError(arg)
@@ -211,6 +196,26 @@ def parsepos(arg, /, namespace=None, *, lookup='.', call='@', typesep=':',
         return convert(rep)
     except Exception as exc:
         raise Exception(f"cannot convert {rep!r} to {conv!r}: {exc}")
+
+
+def do_lookup(namespace, path, *, sep='.'):
+    name, *names = path[1:].split(sep)
+
+    try:
+        obj = namespace[name]
+    except KeyError as exc:
+        raise Exception(
+            f"error looking up {path!r}:"
+            f" {name!r} is not in the provided namespace") from exc
+    try:
+        for name in names:
+            obj = getattr(obj, name)
+    except Exception as exc:
+        msg = f"{exc.__class__.__name__}: {exc}"
+        raise Exception(
+            f"error looking up {path!r}, at attribute {name!r}"
+            f" of object {obj!r}: {msg!r}") from exc
+    return obj
 
 
 PARSEPOS_EXAMPLES = r"""
