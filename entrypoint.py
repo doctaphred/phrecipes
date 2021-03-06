@@ -12,13 +12,13 @@ Kwargs:
 
 Explicit type conversion:
 
-    >>> splitparse(''' str:1 int:1 float:1 ''')
-    ('1', 1, 1.0)
+    >>> splitparse(''' str:1 int:1 float:1 complex:1 utf8:1 str: utf8:''')
+    ('1', 1, 1.0, (1+0j), b'1', '', b'')
 
 Automatic type conversion:
 
-    >>> splitparse(''' :1 :1.0 :True :False :None ''')
-    (1, 1.0, True, False, None)
+    >>> splitparse(''' :1 :1.0 :True :False :None :str: : :: ''')
+    (1, 1.0, True, False, None, 'str:', '', ':')
 
 Compound objects:
 
@@ -96,8 +96,11 @@ def parsepos(arg, *, typesep=':', auto=auto, conversions=conversions):
     'ayy'
     >>> parsepos('str:ayy')
     'ayy'
+    >>> parsepos(':ayy')
+    'ayy'
     >>> parsepos('str:str:ayy')
     'str:ayy'
+
     >>> parsepos('1')
     '1'
     >>> parsepos('str:1')
@@ -106,8 +109,60 @@ def parsepos(arg, *, typesep=':', auto=auto, conversions=conversions):
     1
     >>> parsepos(':1')
     1
+
+    >>> parsepos(':1.0')
+    1.0
+    >>> parsepos(':1.')
+    1.0
+
     >>> parsepos('utf8:ayy')
     b'ayy'
+    >>> parsepos('utf8:')
+    b''
+
+    >>> parsepos('float:0')
+    0.0
+    >>> parsepos('float:-0')
+    -0.0
+    >>> parsepos('float:nan')
+    nan
+    >>> parsepos('float:inf')
+    inf
+    >>> parsepos('float:-inf')
+    -inf
+
+    >>> parsepos(':nan')
+    'nan'
+    >>> parsepos(':inf')
+    'inf'
+    >>> parsepos(':-inf')
+    '-inf'
+
+    >>> parsepos('complex:1')
+    (1+0j)
+    >>> parsepos('complex:j')
+    1j
+    >>> parsepos('complex:+j')
+    1j
+
+    >>> parsepos('')
+    ''
+    >>> parsepos(':')
+    ''
+    >>> parsepos('::')
+    ':'
+    >>> parsepos('str:')
+    ''
+    >>> parsepos(':str:')
+    'str:'
+
+    >>> parsepos(':True')
+    True
+    >>> parsepos(':False')
+    False
+    >>> parsepos(':None') is None
+    True
+
     """
     parts = arg.split(typesep, maxsplit=1)
     try:
