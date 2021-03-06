@@ -35,7 +35,7 @@ Compound objects:
     >>> splitparse(''' :1,2,3 :,ayy,,lmao, ''')  # doctest: +SKIP
     ([1, 2, 3], ['', 'ayy', '', 'lmao', ''])
 
-Name lookup:
+Name lookups:
 
     >>> foo, bar = 'ayy', 'lmao'  # doctest: +SKIP
     >>> splitparse(''' .foo .bar ''')  # doctest: +SKIP
@@ -80,6 +80,7 @@ def splitparse(line):
 
 
 def parse(args):
+    """Parse a sequence of arguments."""
     return tuple(map(parsepos, args))
 
 
@@ -153,6 +154,7 @@ class convert:
 
 
 def parsepos(arg, *, typesep=':', conversions=vars(convert)):
+    """Parse a single positional argument."""
     parts = arg.split(typesep, maxsplit=1)
     try:
         conv, rep = parts
