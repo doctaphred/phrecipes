@@ -1,4 +1,4 @@
-"""(WIP) A not-entirely-awful serialization syntax.
+"""(WIP) A not-entirely-awful syntax for richly typed CLI arguments (and more!)
 
 Args:
 
@@ -10,15 +10,25 @@ Kwargs:
     >>> splitparse(''' ayy=lmao ''')  # doctest: +SKIP
     () {'ayy': 'lmao'}
 
+Values without a ':'-delimited type prefix are ALWAYS strings:
+
+    >>> splitparse(''' 1 1.0 True False None () [] {} ''')
+    ('1', '1.0', 'True', 'False', 'None', '()', '[]', '{}')
+
 Explicit type conversion:
 
     >>> splitparse(''' str:1 int:1 float:1 complex:1 utf8:1 str: utf8:''')
     ('1', 1, 1.0, (1+0j), b'1', '', b'')
 
-Automatic type conversion:
+Automatic (but still explicit) type conversion:
 
-    >>> splitparse(''' :1 :1.0 :True :False :None :str: : :: ''')
-    (1, 1.0, True, False, None, 'str:', '', ':')
+    >>> splitparse(''' :1 :1.0 :True :False :None :() :[] :{} ''')
+    (1, 1.0, True, False, None, (), [], {})
+
+For the QA enthusiasts (see also `PARSEPOS_EXAMPLES` below):
+
+    >>> splitparse(''' :str: : :: ''')
+    ('str:', '', ':')
 
 Compound objects:
 
@@ -166,7 +176,7 @@ def parsepos(arg, *, typesep=':', conversions=vars(convert)):
         raise Exception(f"cannot convert {rep!r} to {conv!r}: {exc}")
 
 
-PARSEPOS_EXAMPLES = """
+PARSEPOS_EXAMPLES = r"""
 
 Strings:
 
@@ -200,10 +210,39 @@ Integers:
     int:-1  -1
 
 
+Hexadecimal integers (with or without '0x' prefix):
+
+    hexint:bad1d3a5    3134313381
+    hexint:0xbad1d3a5  3134313381
+
+
+Octal integers (with or without '0o' prefix):
+
+    octint:1337    735
+    octint:0o1337  735
+
+
+Binary integers (with or without '0b' prefix):
+
+    binint:10    2
+    binint:0b10  2
+
+
+(TODO: check for base prefixes in regular 'int' conversion.)
+
+
 UTF-8 encoded bytes:
 
     utf8:ayy  b'ayy'
     utf8:     b''
+
+
+Hex-encoded bytes:
+
+    hexbytes:bad1d3a5  b'\xba\xd1\xd3\xa5'
+
+
+(TODO: allow prefixes, support other bases (2, 8, 32, 64, 85?).)
 
 
 Floats:
