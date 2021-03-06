@@ -245,6 +245,22 @@ Hex-encoded bytes:
 (TODO: allow prefixes, support other bases (2, 8, 32, 64, 85?).)
 
 
+Fixed-precision decimals:
+
+    decimal:0     Decimal('0')
+    decimal:1     Decimal('1')
+
+    decimal:0.0   Decimal('0.0')
+    decimal:1.0   Decimal('1.0')
+    decimal:+0.0  Decimal('0.0')
+    decimal:+1.0  Decimal('1.0')
+    decimal:-0.0  Decimal('-0.0')
+    decimal:-1.0  Decimal('-1.0')
+
+    decimal:0.    Decimal('0')
+    decimal:.0    Decimal('0.0')
+
+
 Floats:
 
     :1.0         1.0
@@ -294,6 +310,24 @@ Floats:
     float:+1     1.0
     float:+0     0.0
 
+    :1e0         1.0
+    :1e1         10.0
+    :1e10        10000000000.0
+    :1e100       1e+100
+
+
+TODO: should probably raise an exception for too-big values:
+
+    :+1e308  1e+308
+    :-1e308  -1e+308
+    :+2e308  inf
+    :-2e309  -inf
+
+(Or just parse as decimals by default?)
+
+    decimal:1e308  Decimal('1E+308')
+    decimal:2e308  Decimal('2E+308')
+
 
 Special floats:
 
@@ -305,6 +339,9 @@ Special floats:
     float:inf   inf
     float:Inf   inf
     float:INF   inf
+    float:+inf   inf
+    float:+Inf   inf
+    float:+INF   inf
 
     float:-inf -inf
     float:-Inf -inf
