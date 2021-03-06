@@ -203,7 +203,8 @@ def do_conversion(conversions, arg, *, sep=':'):
 
 
 def do_lookup(namespace, path, *, sep='.'):
-    name, *names = path[1:].split(sep)
+    _, name, *names = path.split(sep)
+    assert not _, path
 
     try:
         obj = namespace[name]
