@@ -315,7 +315,6 @@ Integers:
     int:-0   0
     int:-1  -1
 
-
 Integers with a base prefix:
 
     int:0xbad1d3a5  3134313381
@@ -507,12 +506,32 @@ Tricky values that fail to parse:
     :-inf
 
 
-Extra tricky *integers* that look like tricky texts that look like integers:
+Zero can have leading zeros, but other auto ints can't:
 
     :00     0
+    :+00    0
     :-00    0
 
-(TODO: Should probably change or disallow those...)
+    :01
+    :+01
+    :-01
+
+    int:01    1
+    int:+01   1
+    int:-01  -1
+
+Auto floats can, though:
+
+    :0.0      0.0
+    :+0.0     0.0
+    :-0.0    -0.0
+    :00.00    0.0
+    :+00.00   0.0
+    :-00.00  -0.0
+    :01.0     1.0
+    :000001.  1.0
+
+(TODO: Should probably change these...)
 
 
 Complex numbers which are *not* valid complex literals:
