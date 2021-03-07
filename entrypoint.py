@@ -77,11 +77,6 @@ Automatic (but still explicit) type conversion:
     >>> splitparse(''' :1 :1.0 :True :False :None :() :[] :{} ''')
     (1, 1.0, True, False, None, (), [], {})
 
-For the QA enthusiasts (see also `PARSEPOS_EXAMPLES` below):
-
-    >>> splitparse(''' :text: : :: ''')
-    ('text:', '', ':')
-
 Compound objects:
 
     >>> splitparse(''' :1,2,3 :,ayy,,lmao, ''')  # doctest: +SKIP
@@ -132,6 +127,9 @@ Edge cases:
     >>> splitparse(''' text:ayy=text:lmao ''')  # doctest: +SKIP
     >>> splitparse(''' text:ayy=text:lmao ''')  # doctest: +SKIP
 
+    >>> splitparse(''' text: ''')
+    ('',)
+
     >>> splitparse('')
     ()
 
@@ -165,13 +163,15 @@ class convert:
         >>> convert.auto(ok)
         0
         >>> convert.auto(not_ok)[:10]
-        '(((((((((('
+        Traceback (most recent call last):
+          ...
+        Exception: could not parse '((((((((...
         """
         from ast import literal_eval
         try:
             return literal_eval(rep)
-        except Exception:
-            return rep
+        except Exception as exc:
+            raise Exception(f"could not parse {rep!r}") from exc
 
     def utf8(rep):
         """
@@ -279,9 +279,8 @@ PARSEPOS_EXAMPLES = r"""
 
 Text:
 
-    ayy      'ayy'
+    ayy       'ayy'
     text:ayy  'ayy'
-    :ayy     'ayy'
 
 
 Constants:
@@ -447,15 +446,6 @@ Special floats:
     float:-INF -inf
 
 
-Tricky texts that look like special floats:
-
-    :nan  'nan'
-    :inf  'inf'
-    :-inf '-inf'
-
-(TODO: Should these actually be parsed as floats?)
-
-
 Complex numbers:
 
     :1+0j   (1+0j)
@@ -482,28 +472,27 @@ Values are never implicitly converted without a prefix:
 
 Tricky texts:
 
-    :            ''
-    text:         ''
-
-    ::           ':'
-    text::        ':'
-
-    text          'text'
-    :text         'text'
-    text:text      'text'
-
-    :text:        'text:'
-    text:text:     'text:'
+    text:           ''
+    text::          ':'
+    text            'text'
+    text:text       'text'
+    text:text:      'text:'
+    text::text      ':text'
     text:text:text  'text:text'
-    :text:text     'text:text'
-    ::text        ':text'
-    text::text     ':text'
 
 
-Tricky texts that look like integers:
+Tricky values that fail to parse:
 
-    :01    '01'
-    :-01  '-01'
+    :
+    ::
+    :text
+    :text:
+    :text:text
+    :01
+    :-01
+    :nan
+    :inf
+    :-inf
 
 
 Extra tricky *integers* that look like tricky texts that look like integers:
@@ -529,24 +518,24 @@ Complex numbers which are *not* valid complex literals:
     complex:j         1j
     complex:+j        1j
     complex:-j       -1j
-           :j         'j'
-           :+j       '+j'
-           :-j       '-j'
+           :j
+           :+j
+           :-j
 
     complex:0+j       1j
-           :0+j     '0+j'
+           :0+j
 
     complex:(0j)       0j
            :(0j)       0j
 
     complex:(1+j)  (1+1j)
-           :(1+j)  '(1+j)'
+           :(1+j)
 
     complex:1+j    (1+1j)
-           :1+j     '1+j'
+           :1+j
 
 
-Tricky texts that look like complex numbers:
+Tricky values that look like complex numbers:
 
     1+0j   '1+0j'
     (1+0j) '(1+0j)'
@@ -554,10 +543,10 @@ Tricky texts that look like complex numbers:
     j      'j'
     +j     '+j'
 
-    :01+0j   '01+0j'
-    :(01+0j) '(01+0j)'
-    :01+1j   '01+1j'
-    :0+j     '0+j'
+    :01+0j
+    :(01+0j)
+    :01+1j
+    :0+j
 
 
 Malformed complex numbers which raise an exception when parsed:
