@@ -148,7 +148,6 @@ def parse(argv, /, *args, **kwargs):
 
 class convert:
     text = str
-    int = int
     float = float
     complex = complex
 
@@ -172,6 +171,15 @@ class convert:
             return literal_eval(rep)
         except Exception as exc:
             raise Exception(f"could not parse {rep!r}") from exc
+
+    def int(rep, prefixes={'0x': 16, '0o': 8, '0b': 2}):
+        for prefix, base in prefixes.items():
+            if rep.startswith(prefix):
+                rep = rep.removeprefix(prefix)
+                break
+        else:
+            base = 10
+        return int(rep, base)
 
     def utf8(rep):
         """
@@ -308,6 +316,13 @@ Integers:
     int:-1  -1
 
 
+Integers with a base prefix:
+
+    int:0xbad1d3a5  3134313381
+    int:0o1337      735
+    int:0b10        2
+
+
 Hexadecimal integers (with or without '0x' prefix):
 
     hexint:bad1d3a5    3134313381
@@ -324,9 +339,6 @@ Binary integers (with or without '0b' prefix):
 
     binint:10    2
     binint:0b10  2
-
-
-(TODO: check for base prefixes in regular 'int' conversion.)
 
 
 UTF-8 encoded bytes:
