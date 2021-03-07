@@ -1,5 +1,57 @@
 """(WIP) A not-entirely-awful syntax for richly typed CLI arguments (and more!)
 
+This document describes a schema for the representation of arbitrary values as
+text.
+
+"Text" is a sequence of Unicode code points, or "characters". (In this sense,
+the terms "text", "sequence of text", and "sequence of characters" may be used
+interchangeably, as either mass or count nouns.)
+
+A "representation" is a sequence of text which is used to represent a value.
+
+The definition of a "value" is necessarily beyond the scope of this schema.
+
+Within this schema, by default, the value represented by a representation is
+itself text: the value is equivalent to the representation, and vice versa.
+
+Representations of non-text values are distinguished by a prefix, delimited by
+the character ':', which indicates how the remainder of the representation is
+to be decoded, interpreted, or understood as a value. The specification of
+these prefixes and their meanings is beyond the scope of this schema: the only
+restriction is that the character ':' may not appear in a prefix.
+
+A text value which includes the character ':' cannot be represented without a
+prefix: e.g., `tricky:value` must be represented as `text:tricky:value` or
+similar (assuming the prefix `text` is used to denote text values).
+
+The interpretation and meaning of non-text values is ultimately up to the user
+of this schema; however, certain kinds of values are widely referred to by
+similar names and represented similarly in text. For example, the number 1 may
+be represented as `int:1`, and the representation `float:1.0` may encode an
+IEEE 754 standard double-precision floating-point value with sign bit `0`,
+exponent `01111111111`, and fraction consisting of 52 zeros; BUT, these
+particulars are fully up to the user of this schema to determine.
+
+For convenience, values with unambiguous and commonly understood textual
+representations may be prefixed with only the delimiter character ':'. To
+interpret them, this schema may be applied in "yolo mode", by applying a
+sequence of evaluation rules to the representation and using the first one
+which successfully evaluates it without error.
+
+To limit the potential for errors caused by miscommunication, it is *strongly*
+recommended that any such empty prefixes be filled in before publishing or
+using them in a production context. (This may be done automatically.) It is
+also *strongly* recommended that the automatically applied evaluation rules do
+*not* include a catch-all passthrough rule (such as "text"), as it is generally
+preferable for erroneous values to quickly raise an error than to be quietly
+misinterpreted. (YAML's infamous "Norway Problem" is a major motivation for
+this schema.)
+
+(NOTE: The above description is not yet fully implemented in the code below.)
+
+---
+
+
 Args:
 
     >>> splitparse(''' ayy lmao ''')
