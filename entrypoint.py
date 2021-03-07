@@ -10,14 +10,14 @@ Kwargs:
     >>> splitparse(''' ayy=lmao ''')  # doctest: +SKIP
     () {'ayy': 'lmao'}
 
-Values without a ':'-delimited type prefix are ALWAYS strings:
+Values without a ':'-delimited type prefix are ALWAYS text:
 
     >>> splitparse(''' 1 1.0 True False None () [] {} ''')
     ('1', '1.0', 'True', 'False', 'None', '()', '[]', '{}')
 
 Explicit type conversion:
 
-    >>> splitparse(''' str:1 int:1 float:1 complex:1 utf8:1 str: utf8:''')
+    >>> splitparse(''' text:1 int:1 float:1 complex:1 utf8:1 text: utf8:''')
     ('1', 1, 1.0, (1+0j), b'1', '', b'')
 
 Automatic (but still explicit) type conversion:
@@ -27,8 +27,8 @@ Automatic (but still explicit) type conversion:
 
 For the QA enthusiasts (see also `PARSEPOS_EXAMPLES` below):
 
-    >>> splitparse(''' :str: : :: ''')
-    ('str:', '', ':')
+    >>> splitparse(''' :text: : :: ''')
+    ('text:', '', ':')
 
 Compound objects:
 
@@ -71,14 +71,14 @@ Function calls:
 
 Edge cases:
 
-    >>> splitparse(''' str:ayy str:lmao ''')
+    >>> splitparse(''' text:ayy text:lmao ''')
     ('ayy', 'lmao')
 
-    >>> splitparse(''' str:ayy=lmao ''')  # doctest: +SKIP
+    >>> splitparse(''' text:ayy=lmao ''')  # doctest: +SKIP
     ('ayy=lmao',)
 
-    >>> splitparse(''' str:ayy=str:lmao ''')  # doctest: +SKIP
-    >>> splitparse(''' str:ayy=str:lmao ''')  # doctest: +SKIP
+    >>> splitparse(''' text:ayy=text:lmao ''')  # doctest: +SKIP
+    >>> splitparse(''' text:ayy=text:lmao ''')  # doctest: +SKIP
 
     >>> splitparse('')
     ()
@@ -97,7 +97,7 @@ def parse(argv, /, *args, **kwargs):
 
 
 class convert:
-    str = str
+    text = str
     int = int
     float = float
     complex = complex
@@ -184,7 +184,7 @@ def do_conversion(conversions, arg, *, sep=':'):
         conv, rep = parts
     except ValueError:
         assert sep not in arg
-        # Positional args without ':' are just strings.
+        # Positional args without ':' are just text.
         return arg
 
     if not conv:
@@ -199,7 +199,7 @@ def do_conversion(conversions, arg, *, sep=':'):
     try:
         return convert(rep)
     except Exception as exc:
-        raise Exception(f"cannot convert {rep!r} to {conv!r}: {exc}")
+        raise Exception(f"cannot convert {rep!r} to {conv!r}: {exc}") from exc
 
 
 def do_lookup(namespace, path, *, sep='.'):
@@ -225,10 +225,10 @@ def do_lookup(namespace, path, *, sep='.'):
 
 PARSEPOS_EXAMPLES = r"""
 
-Strings:
+Text:
 
     ayy      'ayy'
-    str:ayy  'ayy'
+    text:ayy  'ayy'
     :ayy     'ayy'
 
 
@@ -395,7 +395,7 @@ Special floats:
     float:-INF -inf
 
 
-Tricky strings that look like special floats:
+Tricky texts that look like special floats:
 
     :nan  'nan'
     :inf  'inf'
@@ -428,33 +428,33 @@ Values are never implicitly converted without a prefix:
     ...    '...'
 
 
-Tricky strings:
+Tricky texts:
 
     :            ''
-    str:         ''
+    text:         ''
 
     ::           ':'
-    str::        ':'
+    text::        ':'
 
-    str          'str'
-    :str         'str'
-    str:str      'str'
+    text          'text'
+    :text         'text'
+    text:text      'text'
 
-    :str:        'str:'
-    str:str:     'str:'
-    str:str:str  'str:str'
-    :str:str     'str:str'
-    ::str        ':str'
-    str::str     ':str'
+    :text:        'text:'
+    text:text:     'text:'
+    text:text:text  'text:text'
+    :text:text     'text:text'
+    ::text        ':text'
+    text::text     ':text'
 
 
-Tricky strings that look like integers:
+Tricky texts that look like integers:
 
     :01    '01'
     :-01  '-01'
 
 
-Extra tricky *integers* that look like tricky strings that look like integers:
+Extra tricky *integers* that look like tricky texts that look like integers:
 
     :00     0
     :-00    0
@@ -494,7 +494,7 @@ Complex numbers which are *not* valid complex literals:
            :1+j     '1+j'
 
 
-Tricky strings that look like complex numbers:
+Tricky texts that look like complex numbers:
 
     1+0j   '1+0j'
     (1+0j) '(1+0j)'
