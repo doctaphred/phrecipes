@@ -287,8 +287,8 @@ PARSEPOS_EXAMPLES = r"""
 
 Text:
 
-    ayy       'ayy'
-    text:ayy  'ayy'
+    ayy        'ayy'
+    text:lmao  'lmao'
 
 
 Constants:
