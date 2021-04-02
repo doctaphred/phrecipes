@@ -342,9 +342,13 @@ Binary integers (with or without '0b' prefix):
 
 UTF-8 encoded bytes:
 
-    utf8:ayy  b'ayy'
-    utf8:     b''
-
+    utf8:ayy        b'ayy'
+    utf8:           b''
+    utf8:à          b'\xc3\xa0'
+    utf8:☃          b'\xe2\x98\x83'
+    utf8:💩          b'\xf0\x9f\x92\xa9'
+    utf8:ಠ_ಠ        b'\xe0\xb2\xa0_\xe0\xb2\xa0'
+    utf8:¯\_(ツ)_/¯  b'\xc2\xaf\\_(\xe3\x83\x84)_/\xc2\xaf'
 
 Hex-encoded bytes:
 
