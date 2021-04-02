@@ -1,6 +1,35 @@
-from functools import partial
 import hashlib
 import sys
+from contextlib import contextmanager
+from functools import partial
+from io import StringIO
+
+
+@contextmanager
+def rewind(buffer=None, *, default=StringIO):
+    """
+    >>> with rewind() as buffer:
+    ...     buffer.write('ayy')
+    3
+    >>> buffer.read()
+    'ayy'
+    >>> with rewind(buffer):
+    ...     buffer.write('lmao')
+    4
+    >>> buffer.read()
+    'lmao'
+    >>> buffer.seek(0)
+    0
+    >>> buffer.read()
+    'ayylmao'
+    """
+    if buffer is None:
+        buffer = default()
+    start = buffer.tell()
+    try:
+        yield buffer
+    finally:
+        buffer.seek(start)
 
 
 def chunks(readinto, buffer):
