@@ -111,6 +111,114 @@ def defaultdivvy(iterable, predicate):
     return results
 
 
+def invert(dct):
+    """Invert a dictionary.
+
+    >>> dct = {'ayy': True, 'lmao': True, 'foo': False, 'bar': False}
+    >>> inv = {True: {'ayy', 'lmao'}, False: {'foo', 'bar'}}
+    >>> assert invert(dct) == inv, inv
+    """
+    return divvy(dct, dct.__getitem__)
+
+
+def dict_zip(keys, *dicts):
+    """
+    >>> a = dict.fromkeys([1, 2], 'a')
+    >>> b = dict.fromkeys([1, 2, 3], 'b')
+    >>> c = dict.fromkeys([2, 3], 'c')
+
+    >>> for key, values in dict_zip([1, 2], a, b): print(key, values)
+    1 ('a', 'b')
+    2 ('a', 'b')
+
+    >>> for key, values in dict_zip([2, 3], b, c): print(key, values)
+    2 ('b', 'c')
+    3 ('b', 'c')
+
+    >>> for key, values in dict_zip([2], a, b, c): print(key, values)
+    2 ('a', 'b', 'c')
+    """
+    for key in keys:
+        yield key, tuple(d[key] for d in dicts)
+
+
+def dict_zip_default(keys, *dicts, default=None):
+    """
+    >>> a = dict.fromkeys([1, 2], 'a')
+    >>> b = dict.fromkeys([1, 2, 3], 'b')
+    >>> c = dict.fromkeys([2, 3], 'c')
+
+    >>> for k, v in dict_zip_default([1, 2, 3], a, b): print(k, v)
+    1 ('a', 'b')
+    2 ('a', 'b')
+    3 (None, 'b')
+
+    >>> for k, v in dict_zip_default([1, 2, 3], b, c): print(k, v)
+    1 ('b', None)
+    2 ('b', 'c')
+    3 ('b', 'c')
+
+    >>> for k, v in dict_zip_default([1, 2, 3], a, b, c): print(k, v)
+    1 ('a', 'b', None)
+    2 ('a', 'b', 'c')
+    3 (None, 'b', 'c')
+    """
+    for key in keys:
+        yield key, tuple(d.get(key, default) for d in dicts)
+
+
+def dict_zip_all(*dicts):
+    """Yield keys common to all dicts and tuples of values.
+
+    >>> a = dict.fromkeys([1, 2], 'a')
+    >>> b = dict.fromkeys([1, 2, 3], 'b')
+    >>> c = dict.fromkeys([2, 3], 'c')
+
+    >>> for key, values in dict_zip_all(a, b): print(key, values)
+    1 ('a', 'b')
+    2 ('a', 'b')
+
+    >>> for key, values in dict_zip_all(b, c): print(key, values)
+    2 ('b', 'c')
+    3 ('b', 'c')
+
+    >>> for key, values in dict_zip_all(a, b, c): print(key, values)
+    2 ('a', 'b', 'c')
+    """
+    keys = set.intersection(*[set(d.keys()) for d in dicts])
+    for key in keys:
+        yield key, tuple(d[key] for d in dicts)
+    # return dict_zip(keys, *dicts)
+
+
+def dict_zip_any(*dicts, default=None):
+    """Yield all keys from all dicts and tuples of values.
+
+    >>> a = dict.fromkeys([1, 2], 'a')
+    >>> b = dict.fromkeys([1, 2, 3], 'b')
+    >>> c = dict.fromkeys([2, 3], 'c')
+
+    >>> for key, values in dict_zip_any(a, b): print(key, values)
+    1 ('a', 'b')
+    2 ('a', 'b')
+    3 (None, 'b')
+
+    >>> for key, values in dict_zip_any(b, c): print(key, values)
+    1 ('b', None)
+    2 ('b', 'c')
+    3 ('b', 'c')
+
+    >>> for key, values in dict_zip_any(a, b, c): print(key, values)
+    1 ('a', 'b', None)
+    2 ('a', 'b', 'c')
+    3 (None, 'b', 'c')
+    """
+    keys = set.union(*[set(d.keys()) for d in dicts])
+    for key in keys:
+        yield key, tuple(d.get(key, default) for d in dicts)
+    # return dict_zip_default(keys, *dicts, default=default)
+
+
 def unique(*iterables, key=None):
     """Yield unique elements, preserving order.
 
