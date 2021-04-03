@@ -11,6 +11,7 @@ class Karen:
     4
     >>> file('ayy.txt', 'r').read()
     'lmao'
+    >>> Path('ayy.txt').unlink()
     """
 
     def __init__(self, manager, /, *args, **kwargs):
