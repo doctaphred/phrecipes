@@ -5,13 +5,13 @@ Extended doctests for ``stats``
     >>> from stats import *
 
 
-Stats are computed quickly, even over 1 million samples:
+stats are computed quickly, even over 1 million samples:
 
     >>> from time import perf_counter as clock
     >>> start = clock()
-    >>> s = Stats(range(1_000_000))
+    >>> s = stats(range(1_000_000))
     >>> s.pprint()
-    Stats(
+    stats(
         count=1000000,
         first=0,
         last=999999,
@@ -29,27 +29,27 @@ Stats are computed quickly, even over 1 million samples:
 
 Addition works as expected:
 
-    >>> s = Stats([0])
+    >>> s = stats([0])
     >>> s
-    Stats(count=1, first=0, last=0, min=0, max=0, sum=0, mean=0, ssdm=0)
+    stats(count=1, first=0, last=0, min=0, max=0, sum=0, mean=0, ssdm=0)
 
     >>> s + [1]
-    Stats(count=2, first=0, last=1, min=0, max=1, sum=1, mean=0.5, ssdm=0.5)
+    stats(count=2, first=0, last=1, min=0, max=1, sum=1, mean=0.5, ssdm=0.5)
 
     >>> s += [1]
     >>> s
-    Stats(count=2, first=0, last=1, min=0, max=1, sum=1, mean=0.5, ssdm=0.5)
+    stats(count=2, first=0, last=1, min=0, max=1, sum=1, mean=0.5, ssdm=0.5)
 
 
 Works with sum():
 
     >>> sum([[2], [3]], s)
-    Stats(count=4, first=0, last=3, min=0, max=3, sum=6, mean=1.5, ssdm=5.0)
+    stats(count=4, first=0, last=3, min=0, max=3, sum=6, mean=1.5, ssdm=5.0)
 
 
 In-place addition reassigns, and doesn't mutate:
 
-    >>> s0 = s1 = Stats([0])
+    >>> s0 = s1 = stats([0])
     >>> assert s1 is s0
     >>> assert s1 == s0
     >>> s1 += [0]
@@ -59,7 +59,7 @@ In-place addition reassigns, and doesn't mutate:
 
 Empty samples don't change any values:
 
-    >>> s0 = s1 = Stats([0])
+    >>> s0 = s1 = stats([0])
     >>> assert s1 is s0
     >>> assert s1 == s0
     >>> s1 += ()
@@ -70,8 +70,8 @@ Empty samples don't change any values:
 
 Miscellaneous corner cases:
 
-    >>> Stats([0]).pprint()
-    Stats(
+    >>> stats([0]).pprint()
+    stats(
         count=1,
         first=0,
         last=0,
@@ -84,8 +84,8 @@ Miscellaneous corner cases:
         # stdev: 0.0
     )
 
-    >>> Stats([1]).pprint()
-    Stats(
+    >>> stats([1]).pprint()
+    stats(
         count=1,
         first=1,
         last=1,
@@ -98,7 +98,7 @@ Miscellaneous corner cases:
         # stdev: 0.0
     )
 
-    >>> Stats([])
+    >>> stats([])
     Traceback (most recent call last):
       ...
     StopIteration

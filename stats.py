@@ -3,7 +3,7 @@ from math import isclose
 import warnings
 
 
-class Stats(namedtuple('Stats', [
+class stats(namedtuple('stats', [
     'count',
     'first',
     'last',
@@ -23,8 +23,8 @@ class Stats(namedtuple('Stats', [
 
     Example:
 
-        >>> Stats([1, 2, 3]).pprint()
-        Stats(
+        >>> stats([1, 2, 3]).pprint()
+        stats(
             count=3,
             first=1,
             last=3,
@@ -39,21 +39,21 @@ class Stats(namedtuple('Stats', [
 
     (Note that the unbiased sample variance is 1.0, not 2/3.)
 
-    Stats can be updated with any iterable:
+    stats can be updated with any iterable:
 
-        >>> Stats([1]) + [2] + iter([3])
-        Stats(count=3, first=1, last=3, min=1, max=3, sum=6, mean=2.0, ssdm=2.0)
+        >>> stats([1]) + [2] + iter([3])
+        stats(count=3, first=1, last=3, min=1, max=3, sum=6, mean=2.0, ssdm=2.0)
 
-    Stats instances are immutable; in-place addition is reassignment:
+    stats instances are immutable; in-place addition is reassignment:
 
-        >>> s1 = s2 = Stats(b'ayy')
+        >>> s1 = s2 = stats(b'ayy')
         >>> s2 += b'lmao'
         >>> assert s1 != s2
 
-    Stats instances can be combined (including their variance!):
+    stats instances can be combined (including their variance!):
 
-        >>> combined = Stats([1]) | Stats([2]) | Stats([3])
-        >>> assert combined == Stats([1, 2, 3])
+        >>> combined = stats([1]) | stats([2]) | stats([3])
+        >>> assert combined == stats([1, 2, 3])
     """
 
     def __new__(cls, *args, **kwargs):
@@ -70,8 +70,8 @@ class Stats(namedtuple('Stats', [
         return self + samples
 
     def __add__(self, samples):
-        """Update the Stats with additional samples."""
-        assert not isinstance(samples, Stats), "merge Stats with |, not +"
+        """Update the stats with additional samples."""
+        assert not isinstance(samples, stats), "merge stats with |, not +"
         count, first, last, min, max, sum, mean, ssdm = self
 
         for last in samples:
@@ -91,7 +91,7 @@ class Stats(namedtuple('Stats', [
         return self.__class__(count, first, last, min, max, sum, mean, ssdm)
 
     def merge(*stats):
-        """Merge the data from multiple Stats instances."""
+        """Merge the data from multiple stats instances."""
         assert stats
         count = sum(s.count for s in stats)
         total = sum(s.sum for s in stats)
@@ -102,7 +102,7 @@ class Stats(namedtuple('Stats', [
 
         return first.__class__(
             count=count,
-            # Assume the Stats objects were provided in order.
+            # Assume the stats objects were provided in order.
             first=first.first,
             last=last.last,
             min=min(s.min for s in stats),
@@ -120,7 +120,7 @@ class Stats(namedtuple('Stats', [
 
     def __eq__(self, other):
         """Check for equality within the bounds of floating point precision."""
-        if not isinstance(other, Stats):
+        if not isinstance(other, stats):
             return NotImplemented
         return all(isclose(s, o) for s, o in zip(self, other))
 
