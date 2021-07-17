@@ -23,7 +23,7 @@ class Stats(namedtuple('Stats', [
 
     Example:
 
-        >>> Stats.of([1, 2, 3]).pprint()
+        >>> Stats([1, 2, 3]).pprint()
         Stats(
             count=3,
             first=1,
@@ -41,20 +41,26 @@ class Stats(namedtuple('Stats', [
 
     Stats can be updated with any iterable:
 
-        >>> Stats.of([1]) + [2] + iter([3])
+        >>> Stats([1]) + [2] + iter([3])
         Stats(count=3, first=1, last=3, min=1, max=3, sum=6, mean=2.0, ssdm=2.0)
 
     Stats instances are immutable; in-place addition is reassignment:
 
-        >>> s1 = s2 = Stats.of(b'ayy')
+        >>> s1 = s2 = Stats(b'ayy')
         >>> s2 += b'lmao'
         >>> assert s1 != s2
 
     Stats instances can be combined (including their variance!):
 
-        >>> combined = Stats.of([1]) | Stats.of([2]) | Stats.of([3])
-        >>> assert combined == Stats.of([1, 2, 3])
+        >>> combined = Stats([1]) | Stats([2]) | Stats([3])
+        >>> assert combined == Stats([1, 2, 3])
     """
+
+    def __new__(cls, *args, **kwargs):
+        if not kwargs and len(args) == 1:
+            return cls.of(*args)
+        else:
+            return super().__new__(cls, *args, **kwargs)
 
     @classmethod
     def of(cls, samples):

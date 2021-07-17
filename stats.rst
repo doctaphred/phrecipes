@@ -9,7 +9,7 @@ Stats are computed quickly, even over 1 million samples:
 
     >>> from time import perf_counter as clock
     >>> start = clock()
-    >>> s = Stats.of(range(1_000_000))
+    >>> s = Stats(range(1_000_000))
     >>> s.pprint()
     Stats(
         count=1000000,
@@ -29,7 +29,7 @@ Stats are computed quickly, even over 1 million samples:
 
 Addition works as expected:
 
-    >>> s = Stats.of([0])
+    >>> s = Stats([0])
     >>> s
     Stats(count=1, first=0, last=0, min=0, max=0, sum=0, mean=0, ssdm=0)
 
@@ -49,7 +49,7 @@ Works with sum():
 
 In-place addition reassigns, and doesn't mutate:
 
-    >>> s0 = s1 = Stats.of([0])
+    >>> s0 = s1 = Stats([0])
     >>> assert s1 is s0
     >>> assert s1 == s0
     >>> s1 += [0]
@@ -59,7 +59,7 @@ In-place addition reassigns, and doesn't mutate:
 
 Empty samples don't change any values:
 
-    >>> s0 = s1 = Stats.of([0])
+    >>> s0 = s1 = Stats([0])
     >>> assert s1 is s0
     >>> assert s1 == s0
     >>> s1 += ()
@@ -70,7 +70,7 @@ Empty samples don't change any values:
 
 Miscellaneous corner cases:
 
-    >>> Stats.of([0]).pprint()
+    >>> Stats([0]).pprint()
     Stats(
         count=1,
         first=0,
@@ -84,7 +84,7 @@ Miscellaneous corner cases:
         # stdev: 0.0
     )
 
-    >>> Stats.of([1]).pprint()
+    >>> Stats([1]).pprint()
     Stats(
         count=1,
         first=1,
@@ -98,7 +98,7 @@ Miscellaneous corner cases:
         # stdev: 0.0
     )
 
-    >>> Stats.of([])
+    >>> Stats([])
     Traceback (most recent call last):
       ...
     StopIteration
