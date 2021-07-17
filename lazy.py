@@ -1,4 +1,8 @@
 def __getattr__(name):
     """Lazily initialize module attributes!"""
-    globals()[name] = obj = globals()['_' + name]()
+    try:
+        init = globals()['_' + name]
+    except KeyError as exc:
+        raise AttributeError(name) from exc
+    globals()[name] = obj = init()
     return obj
