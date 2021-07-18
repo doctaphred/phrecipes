@@ -66,8 +66,8 @@ def nfurcate(predicate, iterable, *, n):
 
     All returned iterators are one-time-use only.
 
-        >>> list(zip(*groups))
-        []
+        >>> [list(group) for group in groups]
+        [[], [], [], [], []]
     """
     get_queue = partial(
         _furcate,
