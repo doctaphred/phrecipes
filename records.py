@@ -10,76 +10,59 @@ Example usage:
     >>> r_same
     record(foo='ayy', bar='lmao')
 
-    >>> r_orig == r_same
-    True
+    >>> assert r_orig == r_same
 
 Records with the same fields, in the same order, have the same type:
 
-    >>> type(r_orig) is type(r_same)
-    True
+    >>> assert type(r_orig) is type(r_same)
 
 Records are hashable:
 
-    >>> r_orig in {r_orig}
-    True
-
-    >>> r_orig in {r_same}
-    True
+    >>> assert r_orig in {r_orig}
+    >>> assert r_orig in {r_same}
 
 Records with different values are not equal, but still have the same type:
 
     >>> r_diff = record(foo='ayy', bar='wat')
 
-    >>> r_orig == r_diff or r_same == r_diff
-    False
-    >>> r_diff in (r_orig, r_same)
-    False
-    >>> type(r_orig) is type(r_diff)
-    True
+    >>> assert r_orig != r_diff and r_same != r_diff
+    >>> assert r_diff not in (r_orig, r_same)
+    >>> assert type(r_orig) is type(r_diff)
 
 Different field orders result in different, inequivalent types:
 
     >>> r_forward = record(foo='ayy', bar='lmao')
     >>> r_reverse = record(bar='lmao', foo='ayy')
 
-    >>> r_forward.foo == r_reverse.foo and r_forward.bar == r_reverse.bar
-    True
-
-    >>> r_forward == r_reverse
-    False
-
-    >>> type(r_reverse) is type(r_forward)
-    False
+    >>> assert r_forward.foo == r_reverse.foo and r_forward.bar == r_reverse.bar
+    >>> assert r_forward != r_reverse
+    >>> assert type(r_reverse) is not type(r_forward)
 
 Instances are cached:
 
-    >>> r_orig is r_same
-    True
+    >>> assert r_orig is r_same
 
 Caching is implemented via weakrefs, so instances are destroyed when no
 non-weak references remain:
 
     >>> id1 = id(record(a=1, b=2))
     >>> id2 = id(record(a=1, b=2))
-    >>> id1 == id2
-    False
+    >>> assert id1 != id2
 
     >>> ref = record(a=1, b=2)
     >>> id1 = id(record(a=1, b=2))
     >>> id2 = id(record(a=1, b=2))
-    >>> id1 == id2
-    True
+    >>> assert id1 == id2
+
     >>> del ref
     >>> id1 = id(record(a=1, b=2))
     >>> id2 = id(record(a=1, b=2))
-    >>> id1 == id2
-    False
+    >>> assert id1 != id2
 
 Note, however, that implicit references may persist during the
 evaluation of certain expressions:
 
-    >>> record(a=1, b=2) is record(a=1, b=2)
-    True
+    >>> assert record(a=1, b=2) is record(a=1, b=2)
 
 Derivative records can be created by calling instances:
 
@@ -89,8 +72,21 @@ Derivative records can be created by calling instances:
 
 Caching still applies to new records created this way:
 
-    >>> r_derived is r_diff
-    True
+    >>> assert r_orig() is r_orig
+    >>> assert r_orig(foo='ayy') is r_orig
+    >>> assert r_orig(foo='ayy', bar='lmao') is r_orig
+    >>> assert r_orig(bar='lmao') is r_orig
+
+Even when the fields are provided in a different order in the call:
+
+    >>> assert r_orig(bar='lmao', foo='ayy') is r_orig
+
+    (TODO: This does not seem ideal, but I'm not sure what to do instead.)
+
+New fields can also be added this way:
+
+    >>> r_orig(baz='new')
+    record(foo='ayy', bar='lmao', baz='new')
 
 Records have no __dict__, but can easily create one:
 
