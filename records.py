@@ -136,7 +136,10 @@ class RecordMeta(type):
             instance = cls._instances[key] = cls.create_instance(kwargs)
         return instance
 
-    def get_subclass(cls, fields):
+    def __getitem__(cls, fields):
+        """Return a record subclass with the given fields."""
+        if not isinstance(fields, tuple):
+            fields = (fields,)
         try:
             subclass = cls._subclasses[fields]
         except KeyError:
@@ -144,7 +147,7 @@ class RecordMeta(type):
         return subclass
 
     def create_instance(cls, kwargs):
-        subclass = cls.get_subclass(tuple(kwargs))
+        subclass = cls[tuple(kwargs)]
         subclass_super = super(type(subclass), subclass)
         return subclass_super.__call__(**kwargs)
 
