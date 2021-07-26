@@ -103,6 +103,17 @@ New fields can also be added this way:
     >>> r_orig(baz='new')
     record(foo='ayy', bar='lmao', baz='new')
 
+Iterating over a record yields its key-value pairs:
+
+    >>> list(r_orig)
+    [('foo', 'ayy'), ('bar', 'lmao')]
+
+    >>> fields, values = zip(*r_orig)
+    >>> fields
+    ('foo', 'bar')
+    >>> values
+    ('ayy', 'lmao')
+
 Records have no __dict__, but can easily create one:
 
     >>> vars(r_orig)
