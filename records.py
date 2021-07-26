@@ -38,11 +38,13 @@ Different field orders result in different, inequivalent types:
     >>> assert r_forward != r_reverse
     >>> assert type(r_reverse) is not type(r_forward)
 
-However, their type names are (regrettably) identical:
+Their type names indicate this difference:
 
-    >>> assert repr(type(r_reverse)) == repr(type(r_forward))
+    >>> print(type(r_forward))
+    <class 'records.record['foo', 'bar']'>
 
-    (TODO: Fix this!)
+    >>> print(type(r_reverse))
+    <class 'records.record['bar', 'foo']'>
 
 Instances are cached:
 
@@ -75,6 +77,13 @@ Derivative records can be created by calling instances:
     >>> r_derived = r_orig(bar='wat')
     >>> r_derived
     record(foo='ayy', bar='wat')
+
+Derivative records subclass the base record class, not each other:
+
+    >>> for cls in record(a=1)(b=2)(c=3).__class__.__mro__: print(cls)
+    <class 'records.record['a', 'b', 'c']'>
+    <class 'records.record'>
+    <class 'object'>
 
 Caching still applies to new records created this way:
 
@@ -132,6 +141,7 @@ class RecordMeta(type):
     _instances = WeakValueDictionary()
 
     def __call__(cls, **kwargs):
+        """Return a record instance with the given fields."""
         key = tuple(kwargs.items())
         try:
             instance = cls._instances[key]
@@ -155,7 +165,12 @@ class RecordMeta(type):
         return subclass_super.__call__(**kwargs)
 
     def create_subclass(cls, fields):
-        return type(cls.__name__, (cls,), {'__slots__': fields})
+        if fields:
+            fields_repr = ', '.join(map(repr, fields))
+            name = f"{cls.__name__}[{fields_repr}]"
+        else:
+            name = cls.__name__
+        return type(name, (cls,), {'__slots__': fields})
 
 
 class record(metaclass=RecordMeta):
@@ -171,7 +186,7 @@ class record(metaclass=RecordMeta):
 
     def __call__(self, **updates):
         """Construct a new record based on this instance, with some updates."""
-        return type(self)(**{**dict(self), **updates})  # 😚👌
+        return record(**{**dict(self), **updates})  # 😚👌
 
     def __iter__(self):
         """Iterate over key-value PAIRS, as G-d intended."""
