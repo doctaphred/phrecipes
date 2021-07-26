@@ -38,6 +38,12 @@ Different field orders result in different, inequivalent types:
     >>> assert r_forward != r_reverse
     >>> assert type(r_reverse) is not type(r_forward)
 
+However, their type names are (regrettably) identical:
+
+    >>> assert repr(type(r_reverse)) == repr(type(r_forward))
+
+    (TODO: Fix this!)
+
 Instances are cached:
 
     >>> assert r_orig is r_same
@@ -97,6 +103,7 @@ Records have no __dict__, but can easily create one:
 
     >>> dict(r_orig)
     {'foo': 'ayy', 'bar': 'lmao'}
+
 """
 from weakref import WeakValueDictionary
 
@@ -148,7 +155,7 @@ class RecordMeta(type):
         return subclass_super.__call__(**kwargs)
 
     def create_subclass(cls, fields):
-        return type(f"{cls.__name__}_sub", (cls,), {'__slots__': fields})
+        return type(cls.__name__, (cls,), {'__slots__': fields})
 
 
 class record(metaclass=RecordMeta):
