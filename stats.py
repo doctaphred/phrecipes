@@ -69,6 +69,23 @@ class stats(namedtuple('stats', [
         self = cls(1, first, last, min, max, sum, mean, 0)
         return self + samples
 
+    @classmethod
+    def wrap(cls, samples):
+        """
+        >>> for x in stats.wrap([1, 2, 3]):
+        ...     print(x.last, x)
+        1 stats(count=1, first=1, last=1, min=1, max=1, sum=1, mean=1, ssdm=0)
+        2 stats(count=2, first=1, last=2, min=1, max=2, sum=3, mean=1.5, ssdm=0.5)
+        3 stats(count=3, first=1, last=3, min=1, max=3, sum=6, mean=2.0, ssdm=2.0)
+        """
+        samples = iter(samples)
+        first = last = min = max = sum = mean = next(samples)
+        self = cls(1, first, last, min, max, sum, mean, 0)
+        yield self
+        for sample in samples:
+            self += [sample]
+            yield self
+
     def __add__(self, samples):
         """Update the stats with additional samples."""
         assert not isinstance(samples, stats), "merge stats with |, not +"
