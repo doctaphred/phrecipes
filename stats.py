@@ -80,11 +80,26 @@ class stats(namedtuple('stats', [
         """
         samples = iter(samples)
         first = last = min = max = sum = mean = next(samples)
-        self = cls(1, first, last, min, max, sum, mean, 0)
-        yield self
-        for sample in samples:
-            self += [sample]
-            yield self
+        count = 1
+        ssdm = 0
+
+        yield cls(count, first, last, min, max, sum, mean, ssdm)
+
+        for last in samples:
+            count += 1
+            sum += last
+            if last < min:
+                min = last
+            elif last > max:
+                max = last
+
+            prev_dev = last - mean
+            mean += prev_dev / count
+            # Welford's method: compute additional squared deviation using
+            # the deviation from both the previous and current means.
+            ssdm += prev_dev * (last - mean)
+
+            yield cls(count, first, last, min, max, sum, mean, ssdm)
 
     def __add__(self, samples):
         """Update the stats with additional samples."""
