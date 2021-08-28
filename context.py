@@ -22,6 +22,28 @@ def patch(obj, *delattrs, **setattrs):
 
 
 @contextmanager
+def translate_exceptions(exc_types):
+    """Re-raise exceptions as different types.
+
+    >>> with translate_exceptions({Exception: ValueError}):
+    ...     raise Exception('ayy')
+    Traceback (most recent call last):
+      ...
+    ValueError: ayy
+
+    >>> with translate_exceptions({ValueError: KeyError}):
+    ...     raise Exception('nope')
+    Traceback (most recent call last):
+      ...
+    Exception: nope
+    """
+    try:
+        yield
+    except tuple(exc_types) as exc:
+        raise exc_types[type(exc)](exc) from exc
+
+
+@contextmanager
 def handle(handlers):
     """Handle the specified exceptions with the given functions.
 
