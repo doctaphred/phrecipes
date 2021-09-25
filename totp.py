@@ -4,20 +4,20 @@ Inspired by https://github.com/susam/mintotp
 """
 import hmac
 import time
+from dataclasses import dataclass
 
 
+@dataclass
 class OTPGenerator:
     """
     See https://datatracker.ietf.org/doc/html/rfc2104
     See https://datatracker.ietf.org/doc/html/rfc4226
     See https://datatracker.ietf.org/doc/html/rfc6238
     """
-
-    def __init__(self, key: bytes, *, time_step=30, digits=6, digest='sha1'):
-        self.key = key
-        self.time_step = time_step
-        self.digits = digits
-        self.digest = digest
+    key: bytes
+    time_step: int = 30
+    digits: int = 6
+    digest: str = 'sha1'
 
     @classmethod
     def from_b32(cls, b32: str, **kwargs):
