@@ -9,10 +9,30 @@ from dataclasses import dataclass
 
 @dataclass
 class OTPGenerator:
-    """
+    """Time-based One-Time Password generator.
+
     See https://datatracker.ietf.org/doc/html/rfc2104
     See https://datatracker.ietf.org/doc/html/rfc4226
     See https://datatracker.ietf.org/doc/html/rfc6238
+
+    >>> totp = OTPGenerator(b'')
+    >>> totp(0)
+    '328482'
+    >>> totp(29)
+    '328482'
+    >>> totp(30)
+    '812658'
+    >>> totp(31)
+    '812658'
+
+    >>> OTPGenerator(b'', time_step=60).totp(60)
+    '812658'
+
+    >>> OTPGenerator(b'', digits=20).totp(30)
+    '00000000001230812658'
+
+    >>> OTPGenerator(b'', digest='sha256').totp(30)
+    '007993'
     """
     key: bytes
     time_step: int = 30
@@ -70,17 +90,73 @@ class OTPGenerator:
         return str_code[-self.digits:]
 
     def counter(self, time: float) -> int:
+        assert time >= 0, time
         return int(time / self.time_step)
 
     def totp(self, time: float) -> str:
         """Time-based One-Time Password.
 
         See https://datatracker.ietf.org/doc/html/rfc6238#section-4
+
+        >>> from math import nextafter
+        >>> just_started = nextafter(0, 1)
+        >>> almost_there = nextafter(30, 0)
+
+        >>> totp = OTPGenerator(b'')
+        >>> assert totp(0) == totp(just_started) == totp(almost_there)
+        >>> assert totp(almost_there) != totp(30)
+
+        >>> totp2 = OTPGenerator(b'', time_step=60)
+        >>> assert totp(0) == totp2(0) == totp2(30)
+        >>> assert totp(30) == totp2(60)
         """
         return self.hotp(self.counter(time))
 
     def current(self, *, clock=time.time) -> str:
         return self.totp(clock())
+
+    __call__ = totp
+
+    def _check_boundaries(self, step=0):
+        """
+        >>> from itertools import product
+
+        >>> keys = {b'', b'ayy', b'lmao'}
+        >>> time_steps = {1, 30, int(1e10)}
+        >>> digitses = {0, 6, 10_000}
+        >>> digests = {'sha1', 'sha256', 'md5'}
+        >>> steps = range(1, 100)
+
+        >>> param_lists = product(keys, time_steps, digitses, digests, steps)
+        >>> for *params, step in param_lists:
+        ...     totp = OTPGenerator(*params)
+        ...     try:
+        ...         totp._check_boundaries(step)
+        ...     except AssertionError as exc:
+        ...         print(step, totp, exc)
+
+        """
+        assert isinstance(step, int)
+        from math import nextafter
+
+        t1 = self.time_step * step
+        t2 = t1 + self.time_step
+
+        before_t1 = self(nextafter(t1, float('-inf')))
+        at_t1 = self(t1)
+        after_t1 = self(nextafter(t1, float('inf')))
+
+        before_t2 = self(nextafter(t2, float('-inf')))
+        at_t2 = self(t2)
+        after_t2 = self(nextafter(t2, float('inf')))
+
+        assert at_t1 == after_t1, 'at_t1 != after_t1'
+        assert after_t1 == before_t2, 'after_t1 != before_t2'
+        assert at_t2 == after_t2, 'at_t2 != after_t2'
+
+        assert before_t1 != at_t1, 'before_t1 == at_t1'
+        assert before_t2 != at_t2, 'before_t2 == at_t2'
+        assert before_t1 != after_t2, 'before_t1 == after_t2'
 
 
 def totp(key_b32: str):
