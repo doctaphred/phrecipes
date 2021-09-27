@@ -1,6 +1,30 @@
 from itertools import count, product
 
 
+def is_prime(n):
+    """Quick n dirty primality test.
+
+    >>> assert not is_prime(0)
+    >>> assert not is_prime(1)
+    >>> assert is_prime(2)
+    >>> assert is_prime(3)
+    >>> assert not is_prime(4)
+
+    >>> primes = primes()
+    >>> for n in range(1, 10_000):
+    ...     if is_prime(n):
+    ...         p = next(primes)
+    ...         if n != p:
+    ...             print(n, p)
+
+    """
+    assert isinstance(n, int) and n >= 0, n
+    if n < 2:
+        return False
+    max_divisor = int(n ** 0.5)
+    return all(n % d for d in range(2, max_divisor + 1))
+
+
 def primes():
     """Yield prime numbers, starting with 2.
 
