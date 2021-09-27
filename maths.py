@@ -4,32 +4,34 @@ from itertools import count, product
 def primes():
     """Yield prime numbers, starting with 2.
 
-    Algorithm by David Eppstein, Alex Martelli, and Tim Hochberg:
-    http://code.activestate.com/recipes/117119/#c2
+    Algorithm adapted from David Eppstein, Alex Martelli, Tim Hochberg,
+    and Eratosthenes of Cyrene.
+
+    See http://code.activestate.com/recipes/117119/#c2
+    and https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
 
     >>> p = primes()
-    >>> [next(p) for _ in range(10)]
-    [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    >>> [next(p) for _ in range(18)]
+    [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61]
     """
-    yield 2
-    # Map composites to primes witnessing their compositeness
-    composites = {}
-    # Skip even numbers
-    for n in count(3, step=2):
-        # We won't see n again, so we can delete its witness, if any
-        prime_divisor = composites.pop(n, None)
-        if prime_divisor is None:
-            # n is prime
+    yield 2  # Special-case the only even prime, then skip even numbers.
+    witnessed = {}  # Map composites to their "witnesses".
+    for n in count(3, step=2):  # Skip even numbers.
+        try:
+            # We won't see n again, so its witness is no longer needed.
+            witness = witnessed.pop(n)
+        except KeyError:  # No witness: n is prime.
             yield n
-            # Record n as a divisor of its square
-            composites[n ** 2] = 2 * n
+            # Since n is prime, it is the only divisor of n**2. Record
+            # 2n as the witness because we're skipping even numbers.
+            witnessed[n ** 2] = n * 2
         else:
-            # n is composite
-            # Move the witness to a new multiple
-            x = n + prime_divisor
-            while x in composites:
-                x += prime_divisor
-            composites[x] = prime_divisor
+            # Move the witness to its next multiple, skipping any which
+            # already have another witness.
+            n += witness
+            while n in witnessed:
+                n += witness
+            witnessed[n] = witness
 
 
 def reordered_digit_map(exponents, base=2):
