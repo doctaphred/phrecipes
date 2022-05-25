@@ -8,7 +8,7 @@ def url(scheme='', netloc='', path='', params='', query=(), fragment=''):
 
     Args:
         schema: "http", "https", etc
-        netloc: aka "host"
+        netloc: hostname (or <username>:<password>@<hostname>:<port>)
         path: "/path/to/resource". Leading slash is automatic.
         params: Rarely used; you probably want query.
         query: May be a dict or a sequence of 2-tuples.
